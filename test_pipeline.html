@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mathpix → Gemini Pipeline Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .upload-section {
+            border: 3px dashed #667eea;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-section:hover {
+            background: #eef2ff;
+            border-color: #764ba2;
+        }
+        
+        .upload-section.dragover {
+            background: #e0e7ff;
+            border-color: #4f46e5;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .upload-label {
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .result-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .extracted-text {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .option-btn {
+            padding: 20px;
+            border: 2px solid #667eea;
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1em;
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .option-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .option-btn:active {
+            transform: translateY(0);
+        }
+        
+        .option-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+        
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+        
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        
+        .status.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+        
+        .response-text {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            line-height: 1.8;
+            border: 1px solid #d1d5db;
+        }
+        
+        .audio-player {
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Mathpix → Gemini Pipeline Tester</h1>
+        <p class="subtitle">Upload a math equation image and interact with AI</p>
+        
+        <div class="upload-section" id="uploadSection" onclick="document.getElementById('fileInput').click()">
+            <label class="upload-label">
+                📸 Click or drag & drop an image here
+                <input type="file" id="fileInput" accept="image/*" onchange="handleFileUpload(event)">
+            </label>
+        </div>
+        
+        <div id="statusDiv"></div>
+        
+        <div id="resultsDiv" class="hidden"></div>
+    </div>
+
+    <script>
+        let extractedText = '';
+        let currentAudio = null;
+
+        // Drag and drop handlers
+        const uploadSection = document.getElementById('uploadSection');
+        
+        uploadSection.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadSection.classList.add('dragover');
+        });
+        
+        uploadSection.addEventListener('dragleave', () => {
+            uploadSection.classList.remove('dragover');
+        });
+        
+        uploadSection.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadSection.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                processImage(file);
+            }
+        });
+
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                processImage(file);
+            }
+        }
+
+        async function processImage(file) {
+            const statusDiv = document.getElementById('statusDiv');
+            const resultsDiv = document.getElementById('resultsDiv');
+            
+            statusDiv.innerHTML = '<div class="status info"><span class="loading"></span>Processing image with Mathpix OCR...</div>';
+            resultsDiv.classList.add('hidden');
+            
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const response = await fetch('http://localhost:3000/api/mathpix/complete-pipeline', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    extractedText = data.extractedText;
+                    
+                    statusDiv.innerHTML = '<div class="status success">✅ Image processed successfully!</div>';
+                    
+                    resultsDiv.innerHTML = `
+                        <div class="result-section">
+                            <h3 style="color: #667eea; margin-bottom: 15px;">📝 Extracted Text:</h3>
+                            <div class="extracted-text">${data.extractedText}</div>
+                            
+                            ${data.latex ? `
+                                <h3 style="color: #667eea; margin: 20px 0 10px 0;">📐 LaTeX Format:</h3>
+                                <div class="extracted-text">${data.latex}</div>
+                            ` : ''}
+                            
+                            <h3 style="color: #667eea; margin: 30px 0 15px 0;">🎤 Choose Your Option:</h3>
+                            <div class="options-grid">
+                                <button class="option-btn" onclick="handleOption(1)">
+                                    1️⃣ Explain Concepts
+                                </button>
+                                <button class="option-btn" onclick="handleOption(2)">
+                                    2️⃣ Quiz Me
+                                </button>
+                                <button class="option-btn" onclick="handleOption(3)">
+                                    3️⃣ Read Aloud
+                                </button>
+                                <button class="option-btn" onclick="handleOption(4)">
+                                    4️⃣ Custom Request
+                                </button>
+                            </div>
+                            
+                            <div id="responseDiv"></div>
+                        </div>
+                    `;
+                    
+                    resultsDiv.classList.remove('hidden');
+                    
+                    // Speak the options
+                    await speakText(data.message);
+                    
+                } else {
+                    statusDiv.innerHTML = `<div class="status error">❌ Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.innerHTML = `<div class="status error">❌ Error: ${error.message}<br><br>Make sure both servers are running:<br>- AI Backend: http://localhost:8000<br>- Backend: http://localhost:3000</div>`;
+            }
+        }
+
+        async function handleOption(optionNumber) {
+            const responseDiv = document.getElementById('responseDiv');
+            
+            if (optionNumber === 4) {
+                const customInput = prompt('What would you like me to do with your notes?');
+                if (!customInput) return;
+                
+                responseDiv.innerHTML = '<div class="status info"><span class="loading"></span>Processing your request...</div>';
+                
+                try {
+                    const response = await fetch('http://localhost:3000/api/mathpix/handle-option', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            option: optionNumber,
+                            extractedText: extractedText,
+                            customInput: customInput
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    displayResponse(data);
+                } catch (error) {
+                    responseDiv.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+                }
+                
+            } else {
+                responseDiv.innerHTML = '<div class="status info"><span class="loading"></span>Processing your choice...</div>';
+                
+                try {
+                    const response = await fetch('http://localhost:3000/api/mathpix/handle-option', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            option: optionNumber,
+                            extractedText: extractedText
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    displayResponse(data);
+                } catch (error) {
+                    responseDiv.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+                }
+            }
+        }
+
+        async function displayResponse(data) {
+            const responseDiv = document.getElementById('responseDiv');
+            
+            if (data.success) {
+                const content = data.result.content || data.result.text_to_speak || '';
+                responseDiv.innerHTML = `
+                    <div style="margin-top: 30px;">
+                        <h3 style="color: #667eea; margin-bottom: 15px;">🤖 AI Response:</h3>
+                        <div class="response-text">${content.replace(/\n/g, '<br>')}</div>
+                        <div class="audio-player">
+                            <button class="option-btn" onclick="speakText(\`${data.textToSpeak.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">
+                                🔊 Play Audio Response
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // Auto-play the response
+                await speakText(data.textToSpeak);
+                
+            } else {
+                responseDiv.innerHTML = `<div class="status error">❌ Error processing option</div>`;
+            }
+        }
+
+        async function speakText(text) {
+            if (currentAudio) {
+                currentAudio.pause();
+            }
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/mathpix/text-to-speech', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+                
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                currentAudio = new Audio(audioUrl);
+                currentAudio.play();
+                
+                currentAudio.onended = () => {
+                    URL.revokeObjectURL(audioUrl);
+                };
+                
+            } catch (error) {
+                console.error('TTS Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>
