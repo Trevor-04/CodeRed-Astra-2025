@@ -94,7 +94,6 @@ The frontend will be available at `http://localhost:5173`
 cd backend
 ```
 
-
 2. Install dependencies:
 
 ```bash

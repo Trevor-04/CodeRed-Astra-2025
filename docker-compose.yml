@@ -1,0 +1,55 @@
+version: "3.8"
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend:/app
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+    command: npm run dev
+
+  ai:
+    build:
+      context: ./ai
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./ai:/app
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    command: bash -c "source venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+
+  supabase-db:
+    image: supabase/postgres:15.1.0.61
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: supabase_password
+      POSTGRES_DB: supabase_db
+    volumes:
+      - supabase-data:/var/lib/postgresql/data
+
+volumes:
+  supabase-data:
