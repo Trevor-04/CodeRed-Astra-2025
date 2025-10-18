@@ -14,6 +14,12 @@ This guide explains how to build and run the entire CodeRed Astra 2025 stack usi
 - **ai**: FastAPI + Gemini (port 8000)
 - **supabase-db**: Supabase Postgres (port 5432)
 
+- ## Run Backend
+ ```
+docker compose build backend
+docker compose up backend
+```
+
 ## Environment Variables
 
 Create a `.env` file in the project root with the following (replace with your actual keys):
