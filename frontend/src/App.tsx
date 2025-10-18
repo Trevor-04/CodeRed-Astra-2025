@@ -231,9 +231,9 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F8FAFC] to-white">
       {/* Skip to main content link for screen readers */}
-      <a href="#main-content" className="skip-link">
-        Skip to main content
-      </a>
+      {/* <a href="#main-content" className="skip-link">
+        @radix-ui/react-switchnt
+      </a> */}
 
       <Header />
 

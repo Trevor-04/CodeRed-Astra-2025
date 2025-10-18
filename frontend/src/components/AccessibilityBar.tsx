@@ -40,7 +40,7 @@ export function AccessibilityBar({
             aria-label="Toggle dyslexia-friendly font"
           >
             <Type className="w-5 h-5" aria-hidden="true" />
-            <span className="hidden sm:inline">Dyslexia Font</span>
+            <span className="hidden cursor-pointer sm:inline">Dyslexia Font</span>
             <span className="sm:hidden">Font</span>
           </Button>
 
@@ -55,7 +55,7 @@ export function AccessibilityBar({
             aria-label="Toggle high contrast mode"
           >
             {isContrastMode ? <Sun className="w-5 h-5" aria-hidden="true" /> : <Moon className="w-5 h-5" aria-hidden="true" />}
-            <span className="hidden sm:inline">High Contrast</span>
+            <span className="hidden cursor-pointer sm:inline">High Contrast</span>
             <span className="sm:hidden">Contrast</span>
           </Button>
 
@@ -66,7 +66,7 @@ export function AccessibilityBar({
               id="voice-speed"
               value={voiceSpeed}
               onChange={(e) => onVoiceSpeedChange(Number(e.target.value))}
-              className="bg-white border border-[#E2E8F0] rounded-lg px-3 py-2 text-base min-w-[80px] text-[#0F172A]"
+              className="bg-white border cursor-pointer border-[#E2E8F0] rounded-lg px-3 py-2 text-base min-w-[80px] text-[#0F172A]"
               aria-label="Voice speed control"
             >
               <option value={0.75}>0.75x</option>
