@@ -91,69 +91,24 @@ The frontend will be available at `http://localhost:5173`
 1. Create and navigate to the backend directory:
 
 ```bash
-mkdir backend
 cd backend
 ```
 
-2. Initialize a new Node.js project:
+
+2. Install dependencies:
 
 ```bash
-npm init -y
+npm install
 ```
 
-3. Install dependencies:
-
-```bash
-npm install express cors dotenv
-npm install -D nodemon @types/express @types/node
-```
-
-4. Create `server.js`:
-
-```javascript
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-
-dotenv.config();
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Test route
-app.get("/api/health", (req, res) => {
-  res.json({ status: "OK", message: "Server is running" });
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
-```
-
-5. Update `package.json` to add scripts and set type to module:
-
-```json
-{
-  "type": "module",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
-  }
-}
-```
-
-6. Create `.env` file:
+3. Create `.env` file:
 
 ```env
 PORT=3000
 NODE_ENV=development
 ```
 
-7. Run the development server:
+4. Run the development server:
 
 ```bash
 npm run dev
@@ -166,7 +121,6 @@ The backend will be available at `http://localhost:3000`
 1. Create and navigate to the ai directory:
 
 ```bash
-mkdir ai
 cd ai
 ```
 
@@ -185,60 +139,16 @@ source venv/bin/activate
 3. Install dependencies:
 
 ```bash
-pip install fastapi uvicorn python-dotenv google-generativeai
+pip install -r requirement.txt
 ```
 
-4. Create `requirements.txt`:
-
-```bash
-pip freeze > requirements.txt
-```
-
-5. Create `main.py`:
-
-```python
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-import google.generativeai as genai
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-app = FastAPI()
-
-# Configure CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Configure Gemini
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-
-@app.get("/")
-async def root():
-    return {"status": "OK", "message": "AI service is running"}
-
-@app.get("/health")
-async def health():
-    return {"status": "healthy"}
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-```
-
-6. Create `.env` file:
+4. Create `.env` file:
 
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
-7. Run the FastAPI server:
+5. Run the FastAPI server:
 
 ```bash
 uvicorn main:app --reload
