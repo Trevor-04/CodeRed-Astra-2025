@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+/* OpenDyslexic font - dyslexia-friendly */
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('https://fonts.cdnfonts.com/s/13317/OpenDyslexic-Regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@theme {
+  /* Color System - White & Blue Theme from Guidelines */
+  --color-primary: #1D4ED8; /* Deep blue for CTAs and headers */
+  --color-primary-hover: #1E40AF; /* Hover state */
+  --color-secondary: #3B82F6; /* Accent blue for icons and hover states */
+  --color-background: #FFFFFF; /* White background */
+  --color-text-primary: #0F172A; /* Dark navy text */
+  --color-text-secondary: #64748B; /* Secondary text */
+  --color-surface-alt: #F8FAFC; /* Light gray cards/sections */
+  --color-highlight: #2563EB; /* Link and focus color */
+  --color-error: #DC2626; /* Error/alert state */
+  --color-border: #E2E8F0; /* Border color */
+  --color-drop-zone: #3B82F6; /* Upload drop zone border */
+  --color-drop-zone-hover: #EFF6FF; /* Upload hover fill */
+  
+  /* High contrast mode */
+  --color-contrast-bg: #1E3A8A; /* Deep blue background */
+  --color-contrast-text: #FFFFFF; /* White text */
+  --color-contrast-accent: #FFFF00; /* Yellow for visibility */
+  
+  /* Spacing scale - 8px base */
+  --spacing-1: 0.5rem; /* 8px */
+  --spacing-2: 1rem; /* 16px */
+  --spacing-3: 1.5rem; /* 24px */
+  --spacing-4: 2rem; /* 32px */
+  --spacing-5: 3rem; /* 48px */
+  --spacing-6: 4rem; /* 64px */
+}
+
+/* Custom breakpoints for guidelines compliance */
+@custom-media --mobile (max-width: 480px);
+@custom-media --tablet (min-width: 481px) and (max-width: 1023px);
+@custom-media --desktop (min-width: 1024px);
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 16px; /* Base font size from guidelines */
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  line-height: 1.5; /* Typography system guideline */
+  min-height: 100vh;
+}
+
+body.dyslexia-font {
+  font-family: 'OpenDyslexic', 'Comic Sans MS', sans-serif;
+  letter-spacing: 0.12em;
+  line-height: 1.75; /* Upper range for dyslexia mode */
+}
+
+body.contrast-mode {
+  background-color: var(--color-contrast-bg);
+  color: var(--color-contrast-text);
+}
+
+/* Typography hierarchy - 1.25 modular ratio */
+h1 {
+  font-size: 2.441rem; /* ~39px */
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: 1.953rem; /* ~31px */
+  line-height: 1.3;
+}
+
+h3 {
+  font-size: 1.563rem; /* ~25px */
+  line-height: 1.4;
+}
+
+/* Focus styles for accessibility - WCAG compliance */
+*:focus-visible {
+  outline: 3px solid var(--color-highlight);
+  outline-offset: 2px;
+}
+
+/* Smooth transitions - 150-250ms as per guidelines */
+* {
+  transition-duration: 200ms;
+  transition-timing-function: ease-in-out;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Skip to main content link */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--color-primary);
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  z-index: 100;
+  border-radius: 0 0 8px 0;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Ensure interactive elements have large hit areas - 48x48px minimum */
+button, a {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+/* Screen reader only class */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
