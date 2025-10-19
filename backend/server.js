@@ -79,33 +79,35 @@ app.delete("/api/uploads/:id", async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-// Create demo user endpoint
+// Create demo user endpoint (optional - auth trigger handles real users)
 app.post("/api/create-demo-user", async (req, res) => {
   try {
-    const demoUserId = '123e4567-e89b-12d3-a456-426614174000';
+    // Get userId from request body, or use default demo ID
+    const userId = req.body.userId || '123e4567-e89b-12d3-a456-426614174000';
+    const email = req.body.email || 'demo@example.com';
     
     if (supabase) {
       // Check if user already exists
       const { data: existingUser } = await supabase
         .from('users')
         .select('id')
-        .eq('id', demoUserId)
+        .eq('id', userId)
         .single();
 
       if (existingUser) {
         return res.json({
           success: true,
-          message: "Demo user already exists",
-          userId: demoUserId
+          message: "User already exists",
+          userId: userId
         });
       }
 
-      // Create demo user
+      // Create user
       const { data, error } = await supabase
         .from('users')
         .insert({
-          id: demoUserId,
-          email: 'demo@example.com',
+          id: userId,
+          email: email,
           password: 'demo123', // Required field for users table
           created_at: new Date().toISOString()
         })
@@ -113,24 +115,24 @@ app.post("/api/create-demo-user", async (req, res) => {
         .single();
 
       if (error) {
-        console.error('Error creating demo user:', error);
+        console.error('Error creating user:', error);
         return res.status(500).json({
-          error: "Failed to create demo user",
+          error: "Failed to create user",
           details: error.message
         });
       }
 
       res.json({
         success: true,
-        message: "Demo user created successfully",
-        userId: demoUserId,
+        message: "User created successfully",
+        userId: userId,
         data: data
       });
     } else {
       res.json({
         success: true,
-        message: "Demo user created (mock mode)",
-        userId: demoUserId
+        message: "User created (mock mode)",
+        userId: userId
       });
     }
   } catch (error) {

@@ -6,6 +6,7 @@ import { RecentRecordings } from "./RecentRecordings";
 import { MathImageProcessor } from "./MathImageProcessor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { type Upload as DBUpload } from "../services/uploadService";
+import { useAuth } from "../contexts/AuthContext";
 
 import {
   Card,
@@ -53,6 +54,7 @@ export function UploadPage({
   mockExtractedContent,
   voiceSpeed,
 }: UploadPageProps) {
+  const { user } = useAuth();
   const [selectedWorkspace, setSelectedWorkspace] = useState<Upload | null>(null);
   // Tab state with colors
   const [activeTab, setActiveTab] = useState("notes");
@@ -236,7 +238,7 @@ export function UploadPage({
                       // Convert DBUpload to Upload format
                       setSelectedWorkspace(convertDBUploadToUpload(recording));
                     }}
-                    userId="123e4567-e89b-12d3-a456-426614174000" // Use the same UUID as for saving uploads
+                    userId={user?.id}
                   />
                 </div>
               )}

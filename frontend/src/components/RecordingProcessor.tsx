@@ -20,6 +20,7 @@ import {
 import { AudioProcessingService } from '../services/audioProcessingService';
 import { SpeechToTextService } from '../services/speechToTextService';
 import { UploadService } from '../services/uploadService';
+import { useAuth } from '../contexts/AuthContext';
 import type { AudioExtractionProgress } from '../services/audioProcessingService';
 import type { TranscriptionProgress, TranscriptionResult } from '../services/speechToTextService';
 
@@ -41,6 +42,7 @@ export function RecordingProcessor({
   onError,
   className = ''
 }: RecordingProcessorProps) {
+  const { user } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [processingState, setProcessingState] = useState<ProcessingState>({
     stage: 'idle',
@@ -157,15 +159,19 @@ export function RecordingProcessor({
 
       // Save the upload to the database
       try {
-        await UploadService.saveUpload({
-          id: crypto.randomUUID(),
-          userId: '123e4567-e89b-12d3-a456-426614174000', // Consistent demo user UUID
-          type: selectedFile.type.startsWith('video/') ? 'video' : 'audio',
-          filePath: selectedFile.name, // In a real app, this would be the actual file path in storage
-          originalName: selectedFile.name,
-          parsedText: result.text,
-        });
-        console.log('Upload saved to database successfully');
+        if (user?.id) {
+          await UploadService.saveUpload({
+            id: crypto.randomUUID(),
+            userId: user.id,
+            type: selectedFile.type.startsWith('video/') ? 'video' : 'audio',
+            filePath: selectedFile.name, // In a real app, this would be the actual file path in storage
+            originalName: selectedFile.name,
+            parsedText: result.text,
+          });
+          console.log('Upload saved to database successfully');
+        } else {
+          console.warn('No user ID available, skipping database save');
+        }
       } catch (saveError) {
         console.error('Failed to save upload to database:', saveError);
         // Don't show error to user since transcription succeeded
@@ -183,7 +189,7 @@ export function RecordingProcessor({
       });
       onError?.(errorMessage);
     }
-  }, [selectedFile, speechToTextService, audioProcessingService, onTranscriptionComplete, onError]);
+  }, [selectedFile, speechToTextService, audioProcessingService, onTranscriptionComplete, onError, user?.id]);
 
   // Audio playback controls
   const togglePlayback = useCallback(() => {
