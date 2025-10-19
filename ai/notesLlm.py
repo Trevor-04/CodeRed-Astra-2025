@@ -25,14 +25,24 @@ async def stream(message: str = "Explain AI to me", context: str = ""):
     async def event_generator():
         # Build the prompt with context
         if context:
-            prompt = f"""You are an AI assistant helping a student understand their notes.
+            prompt = f"""
+            You are a precise AI tutor helping a student understand their notes.
 
-            Context from the student's notes:
+            ### CONTEXT
             {context}
 
-            Student's question: {message}
+            ### STUDENT QUESTION
+            {message}
 
-        Please provide a helpful, clear response based on the notes provided."""
+            ### INSTRUCTIONS
+            - If the question can be explained directly: **Give a short, clear answer (max 4 sentences).**
+            - **Do NOT over-explain**. Be concise unless the student asks for more detail.
+            - If the student asks to quiz them:
+                - **Ask ONE question at a time.**
+                - **Wait for their answer before giving the next question.**
+                - **If they answer incorrectly, briefly correct them before proceeding.**
+            - If the student gives an unclear question, **ask a clarification question instead of guessing.**
+            """
         else:
             prompt = message
         
