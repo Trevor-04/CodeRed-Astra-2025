@@ -22,6 +22,7 @@ interface Upload {
   filePath: string;
   originalName: string;
   createdAt: string;
+  parsedText?: string;
 }
 
 interface UploadPageProps {

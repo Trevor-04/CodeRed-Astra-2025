@@ -39,86 +39,76 @@ export function UploadArea({ onUpload, onBack }: UploadAreaProps) {
 
   return (
     <main
-      className="container mx-auto px-6 lg:px-12 py-6 lg:py-12 max-w-[1200px]"
+      className="container mx-auto px-4 py-8 max-w-6xl"
       role="main"
     >
-      {/* Secondary button for back navigation */}
-
-      <h2 className="text-3xl lg:text-4xl mb-8 lg:mb-12 text-center text-[#0F172A]">
-        Upload Your STEM Content
-      </h2>
 
       {/* Drop zone with guideline colors: border #3B82F6, hover fill #EFF6FF */}
-      <Card
-        className={`bg-white border-2 transition-all duration-200 shadow-lg rounded-lg ${
-          isDragging
-            ? "border-[#3B82F6] bg-[#EFF6FF]"
-            : "border-dashed border-[#3B82F6]"
-        }`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        role="region"
-        aria-label="File upload area"
+     <Card
+  className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors cursor-pointer ${
+    isDragging ? "border-indigo-400 bg-indigo-50" : "border-gray-300"
+  }`}
+  onDragOver={handleDragOver}
+  onDragLeave={handleDragLeave}
+  onDrop={handleDrop}
+>
+  <div className="flex flex-col items-center gap-4">
+    <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center">
+      <Upload className="w-8 h-8 text-indigo-600" />
+    </div>
+
+    <div>
+      <p className="text-lg font-semibold text-gray-900 mb-1">
+        Drag & drop files here
+      </p>
+      <p className="text-gray-600">Supports PDFs and images</p>
+    </div>
+
+    <input
+      ref={fileInputRef}
+      type="file"
+      accept="image/*,.pdf"
+      onChange={handleFileSelect}
+      className="sr-only"
+      id="file-upload"
+      aria-label="Choose file from device"
+    />
+
+    <div className="flex flex-col sm:flex-row gap-4 lg:gap-6 justify-center items-center">
+      {/* Primary button - padding 16-24px, radius 8px */}
+      <Button
+        onClick={() => fileInputRef.current?.click()}
+        className="cursor-pointer gap-2 bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-lg lg:text-xl px-8 py-6 w-full sm:w-auto shadow-md rounded-lg transition-all duration-200 min-h-[48px]"
       >
-        <div className="p-12 lg:p-16 text-center">
-          <Upload
-            className="w-20 h-20 lg:w-24 lg:h-24 mx-auto mb-8 text-[#3B82F6]"
-            aria-hidden="true"
-          />
+        <FileText className="w-6 h-6" aria-hidden="true" />
+        Choose File
+      </Button>
 
-          <p className="text-2xl lg:text-3xl mb-6 px-4 text-[#0F172A]">
-            Drag and drop or upload a file
-          </p>
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleFileSelect}
+        className="sr-only"
+        id="camera-capture"
+        aria-label="Take photo with camera"
+      />
+      {/* Camera icon for mobile as per guidelines */}
+      <Button
+        onClick={() => cameraInputRef.current?.click()}
+        className="cursor-pointer gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-lg lg:text-xl px-8 py-6 w-full sm:w-auto shadow-md rounded-lg transition-all duration-200 min-h-[48px]"
+      >
+        <Camera className="w-6 h-6" aria-hidden="true" />
+        Take Photo
+      </Button>
+    </div>
 
-          <p className="text-lg lg:text-xl text-[#64748B] mb-12 px-4">
-            Upload a photo, PDF, or handwritten equation
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 lg:gap-6 justify-center items-center">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,.pdf"
-              onChange={handleFileSelect}
-              className="sr-only"
-              id="file-upload"
-              aria-label="Choose file from device"
-            />
-            {/* Primary button - padding 16-24px, radius 8px */}
-            <Button
-              onClick={() => fileInputRef.current?.click()}
-              className="cursor-pointer gap-2 bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-lg lg:text-xl px-8 py-6 w-full sm:w-auto shadow-md rounded-lg transition-all duration-200 min-h-[48px]"
-            >
-              <FileText className="w-6 h-6" aria-hidden="true" />
-              Choose File
-            </Button>
-
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleFileSelect}
-              className="sr-only"
-              id="camera-capture"
-              aria-label="Take photo with camera"
-            />
-            {/* Camera icon for mobile as per guidelines */}
-            <Button
-              onClick={() => cameraInputRef.current?.click()}
-              className="cursor-pointer gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-lg lg:text-xl px-8 py-6 w-full sm:w-auto shadow-md rounded-lg transition-all duration-200 min-h-[48px]"
-            >
-              <Camera className="w-6 h-6" aria-hidden="true" />
-              Take Photo
-            </Button>
-          </div>
-
-          <p className="text-base text-[#64748B] mt-8">
-            Supported formats: JPG, PNG, PDF
-          </p>
-        </div>
-      </Card>
+    <p className="text-base text-[#64748B] mt-8">
+      Supported formats: JPG, PNG, PDF
+    </p>
+  </div>
+</Card>
     </main>
   );
 }
