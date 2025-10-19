@@ -88,7 +88,7 @@ export function UploadArea({ onUpload, onBack }: UploadAreaProps) {
             {/* Primary button - padding 16-24px, radius 8px */}
             <Button
               onClick={() => fileInputRef.current?.click()}
-              className="gap-2 bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-lg lg:text-xl px-8 py-6 w-full sm:w-auto shadow-md rounded-lg transition-all duration-200 min-h-[48px]"
+              className="cursor-pointer gap-2 bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-lg lg:text-xl px-8 py-6 w-full sm:w-auto shadow-md rounded-lg transition-all duration-200 min-h-[48px]"
             >
               <FileText className="w-6 h-6" aria-hidden="true" />
               Choose File
@@ -107,7 +107,7 @@ export function UploadArea({ onUpload, onBack }: UploadAreaProps) {
             {/* Camera icon for mobile as per guidelines */}
             <Button
               onClick={() => cameraInputRef.current?.click()}
-              className="gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-lg lg:text-xl px-8 py-6 w-full sm:w-auto shadow-md rounded-lg transition-all duration-200 min-h-[48px]"
+              className="cursor-pointer gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-lg lg:text-xl px-8 py-6 w-full sm:w-auto shadow-md rounded-lg transition-all duration-200 min-h-[48px]"
             >
               <Camera className="w-6 h-6" aria-hidden="true" />
               Take Photo

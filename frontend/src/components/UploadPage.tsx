@@ -36,24 +36,61 @@ export function UploadPage({
     null
   );
 
+  // Tab state with colors
+  const [activeTab, setActiveTab] = useState("notes");
+  
+  const tabConfig = {
+    notes: {
+      value: "notes",
+      color: "blue",
+      bgColor: "bg-blue-50",
+      borderColor: "border-blue-200",
+      hoverColor: "hover:bg-blue-100"
+    },
+    recordings: {
+      value: "recordings", 
+      color: "purple",
+      bgColor: "bg-purple-50",
+      borderColor: "border-purple-200", 
+      hoverColor: "hover:bg-purple-100"
+    },
+    math: {
+      value: "math",
+      color: "green", 
+      bgColor: "bg-green-50",
+      borderColor: "border-green-200",
+      hoverColor: "hover:bg-green-100"
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <button
         onClick={onBack}
-        className="mb-6 flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-semibold transition-colors"
+        className="cursor-pointer mb-6 flex items-center gap-2 text-[#1D4ED8]
+         hover:text-[#1E40AF] border-2 border-[#1D4ED8] p-2 rounded-lg min-h-[48px] font-semibold transition-colors"
       >
         ← Back to Dashboard
       </button>
 
-      <Tabs defaultValue="notes" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-8">
-          <TabsTrigger value="notes" className="text-lg">
+          <TabsTrigger 
+            value="notes" 
+            className={`text-lg cursor-pointer ${activeTab === 'notes' ? 'bg-blue-100 text-blue-700' : ''}`}
+          >
             📄 Notes
           </TabsTrigger>
-          <TabsTrigger value="recordings" className="text-lg">
+          <TabsTrigger 
+            value="recordings" 
+            className={`text-lg cursor-pointer ${activeTab === 'recordings' ? 'bg-purple-100 text-purple-700' : ''}`}
+          >
             🎤 Recordings
           </TabsTrigger>
-          <TabsTrigger value="math" className="text-lg">
+          <TabsTrigger 
+            value="math" 
+            className={`text-lg cursor-pointer ${activeTab === 'math' ? 'bg-green-100 text-green-700' : ''}`}
+          >
             ∑ Math
           </TabsTrigger>
         </TabsList>
@@ -157,7 +194,7 @@ export function UploadPage({
                       Supports MP3, WAV, MP4, MOV (max 100MB)
                     </p>
                   </div>
-                  <button className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                  <button className="cursor-pointer px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                     Browse Files
                   </button>
                 </div>
@@ -256,7 +293,7 @@ export function UploadPage({
                       Supports JPG, PNG, HEIC (handwritten or printed equations)
                     </p>
                   </div>
-                  <button className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                  <button className="cursor-pointer px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                     Browse Images
                   </button>
                 </div>

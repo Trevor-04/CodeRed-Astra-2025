@@ -23,7 +23,7 @@ export function PastLessons({ lessons, onPlayLesson, onDeleteLesson, onBack }: P
     <main className="container mx-auto px-6 lg:px-12 py-6 lg:py-12 max-w-[1200px]" role="main">
       <Button
         onClick={onBack}
-        className="mb-8 min-h-[48px] px-6 bg-white text-[#1D4ED8] border-2 border-[#1D4ED8] hover:bg-[#F8FAFC] rounded-lg transition-all duration-200"
+        className="cursor-pointer mb-8 min-h-[48px] px-6 bg-white text-[#1D4ED8] border-2 border-[#1D4ED8] hover:bg-[#F8FAFC] rounded-lg transition-all duration-200"
         aria-label="Go back to dashboard"
       >
         ← Back to Dashboard
@@ -64,7 +64,7 @@ export function PastLessons({ lessons, onPlayLesson, onDeleteLesson, onBack }: P
                   {/* Primary button for main action */}
                   <Button
                     onClick={() => onPlayLesson(lesson)}
-                    className="gap-2 bg-[#1D4ED8] hover:bg-[#1E40AF] text-white min-h-[48px] px-6 rounded-lg transition-all duration-200"
+                    className="cursor-pointer gap-2 bg-[#1D4ED8] hover:bg-[#1E40AF] text-white min-h-[48px] px-6 rounded-lg transition-all duration-200"
                     aria-label={`Play lesson: ${lesson.title}`}
                   >
                     <Play className="w-5 h-5" aria-hidden="true" />
@@ -73,7 +73,7 @@ export function PastLessons({ lessons, onPlayLesson, onDeleteLesson, onBack }: P
                   {/* Error color for delete action */}
                   <Button
                     onClick={() => onDeleteLesson(lesson.id)}
-                    className="gap-2 border-2 border-[#DC2626] text-[#DC2626] hover:bg-[#FEE2E2] bg-white min-h-[48px] px-6 rounded-lg transition-all duration-200"
+                    className="cursor-pointer gap-2 border-2 border-[#DC2626] text-[#DC2626] hover:bg-[#FEE2E2] bg-white min-h-[48px] px-6 rounded-lg transition-all duration-200"
                     aria-label={`Delete lesson: ${lesson.title}`}
                   >
                     <Trash2 className="w-5 h-5" aria-hidden="true" />
