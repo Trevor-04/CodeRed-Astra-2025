@@ -33,19 +33,24 @@ const supabase = createClient(
 
 // Initialize storage bucket
 const BUCKET_NAME = 'make-b67fdaad-stemvoice-uploads';
+const UPLOADS_BUCKET = 'uploads';
 
-async function initializeBucket() {
+async function initializeBuckets() {
   const { data: buckets } = await supabase.storage.listBuckets();
-  const bucketExists = buckets?.some(bucket => bucket.name === BUCKET_NAME);
-  
-  if (!bucketExists) {
+  // Create main bucket if missing
+  if (!buckets?.some(bucket => bucket.name === BUCKET_NAME)) {
     console.log('Creating storage bucket:', BUCKET_NAME);
     await supabase.storage.createBucket(BUCKET_NAME, { public: false });
+  }
+  // Create uploads bucket if missing
+  if (!buckets?.some(bucket => bucket.name === UPLOADS_BUCKET)) {
+    console.log('Creating storage bucket:', UPLOADS_BUCKET);
+    await supabase.storage.createBucket(UPLOADS_BUCKET, { public: false });
   }
 }
 
 // Initialize on startup
-initializeBucket().catch(console.error);
+initializeBuckets().catch(console.error);
 
 // Upload file endpoint
 app.post('/make-server-b67fdaad/upload', async (c) => {

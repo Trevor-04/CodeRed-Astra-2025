@@ -68,7 +68,7 @@ export function SettingsPage({
             />
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#E2E8F0]">
+          {/* <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#E2E8F0]">
             <div className="flex-1">
               <Label htmlFor="contrast-mode" className="text-xl text-[#0F172A]">High Contrast Mode</Label>
               <p className="text-base text-[#64748B] mt-2">
@@ -82,7 +82,7 @@ export function SettingsPage({
               aria-label="Toggle high contrast mode"
               className="flex-shrink-0"
             />
-          </div>
+          </div> */}
 
           <div>
             <Label htmlFor="text-spacing" className="text-xl text-[#0F172A]">Text Spacing</Label>

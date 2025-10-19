@@ -13,6 +13,7 @@ import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
 import * as pdfjsLib from 'pdfjs-dist';
 import { mockExtractedContent } from "./data/mockContent";
+import { publicAnonKey } from "../utils/supabase/info";
 
 // Configure PDF.js worker with proper Vite handling
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -22,7 +23,14 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 
 // Hardcoded user ID for development
 const CURRENT_USER_ID = "123e4567-e89b-12d3-a456-426614174000";
-const API_BASE_URL = "http://localhost:3000/api";
+const API_BASE_URL = "https://bzrpuvripwivsiongdst.supabase.co/functions/v1/make-server-b67fdaad";
+
+// Helper function to get authenticated headers for Supabase
+const getAuthHeaders = () => ({
+  'Authorization': `Bearer ${publicAnonKey}`,
+  'apikey': publicAnonKey,
+  'Content-Type': 'application/json'
+});
 
 interface Upload {
   id: string;
@@ -128,7 +136,9 @@ function AppContent() {
 
   const loadUploads = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/uploads/${CURRENT_USER_ID}`);
+      const response = await fetch(`${API_BASE_URL}/uploads?userId=${CURRENT_USER_ID}`, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) {
         console.log("⚠️ Backend not available - using empty uploads list");
         return;
@@ -156,13 +166,24 @@ function AppContent() {
 
   const loadLessons = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/lessons`);
+      const response = await fetch(`${API_BASE_URL}/lessons`, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) {
         console.log("⚠️ Backend not available - using empty lessons list");
         return;
       }
       const data = await response.json();
       setLessons(data.lessons || []);
+      console.log("✅ Loaded lessons:", data.lessons?.length || 0);
+      // Debug: Log lesson audio URLs to check for demo audio
+      data.lessons?.forEach((lesson: any, index: number) => {
+        console.log(`Lesson ${index + 1}:`, {
+          title: lesson.title,
+          audioUrl: lesson.audioUrl?.substring(0, 50) + (lesson.audioUrl?.length > 50 ? '...' : ''),
+          isDataUrl: lesson.audioUrl?.startsWith('data:')
+        });
+      });
     } catch (error) {
       console.log("⚠️ Backend not available - using empty lessons list");
       // Don't log error details to avoid console spam during development
@@ -293,9 +314,7 @@ const parseFileContent = async (file: File, rawOnly: boolean = false): Promise<s
       // Send newUpload to backend API
       const response = await fetch(`${API_BASE_URL}/upload`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(newUpload)
       });
 
@@ -330,6 +349,7 @@ const parseFileContent = async (file: File, rawOnly: boolean = false): Promise<s
     try {
       const response = await fetch(`${API_BASE_URL}/lessons/${id}`, {
         method: "DELETE",
+        headers: getAuthHeaders()
       });
 
       if (!response.ok) {
@@ -388,6 +408,7 @@ const parseFileContent = async (file: File, rawOnly: boolean = false): Promise<s
                 onUpload={handleUpload}
                 mockUploads={mockUploads}
                 mockExtractedContent={mockExtractedContent}
+                voiceSpeed={voiceSpeed}
               />
             } 
           />

@@ -111,13 +111,7 @@ export function AudioPlayer({
 
   return (
     <main className="container mx-auto px-6 lg:px-12 py-6 lg:py-12 max-w-[1200px]" role="main">
-      <Button
-        onClick={onBack}
-        className="cursor-pointer mb-8 min-h-[48px] px-6 bg-white text-[#1D4ED8] border-2 border-[#1D4ED8] hover:bg-[#F8FAFC] rounded-lg transition-all duration-200"
-        aria-label="Go back to dashboard"
-      >
-        ← Back to Dashboard
-      </Button>
+      
 
       <h2 className="text-3xl lg:text-4xl mb-8 lg:mb-12 text-center text-[#0F172A]">Your Lesson is Ready!</h2>
 
