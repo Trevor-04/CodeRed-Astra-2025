@@ -37,7 +37,11 @@ function AppContent() {
   const navigate = useNavigate();
   const [processingStage, setProcessingStage] = useState<ProcessingStage>("uploading");
 
-  const [isDyslexiaFont, setIsDyslexiaFont] = useState(false);
+  const [isDyslexiaFont, setIsDyslexiaFont] = useState(() => {
+    // Load saved preference from localStorage
+    const saved = localStorage.getItem('stemvoice-dyslexia-font');
+    return saved ? JSON.parse(saved) : false;
+  });
   const [isContrastMode, setIsContrastMode] = useState(false);
   const [highlightAsSpoken, setHighlightAsSpoken] = useState(true);
   const [voiceSpeed, setVoiceSpeed] = useState(1.0);
@@ -278,6 +282,42 @@ Let u = x² + 1, then du = 2x dx
     document.body.classList.toggle("dyslexia-font", isDyslexiaFont);
     document.body.classList.toggle("contrast-mode", isContrastMode);
     document.body.style.letterSpacing = `${(textSpacing - 1) * 0.05}em`;
+    
+    // Force font family change with inline styles for maximum override
+    if (isDyslexiaFont) {
+      document.body.style.fontFamily = "'Comic Sans MS', 'Trebuchet MS', 'Verdana', cursive, sans-serif";
+      document.body.style.borderTop = "4px solid #10B981";
+      document.body.style.backgroundColor = "#f0f9ff";
+      
+      // Apply to all elements
+      const allElements = document.querySelectorAll('*');
+      allElements.forEach(el => {
+        if (el instanceof HTMLElement) {
+          el.style.fontFamily = "'Comic Sans MS', 'Trebuchet MS', 'Verdana', cursive, sans-serif";
+          el.style.letterSpacing = "0.08em";
+        }
+      });
+    } else {
+      document.body.style.fontFamily = '';
+      document.body.style.borderTop = '';
+      document.body.style.backgroundColor = '';
+      
+      // Reset all elements
+      const allElements = document.querySelectorAll('*');
+      allElements.forEach(el => {
+        if (el instanceof HTMLElement) {
+          el.style.fontFamily = '';
+          el.style.letterSpacing = '';
+        }
+      });
+    }
+    
+    // Save dyslexia font preference to localStorage
+    localStorage.setItem('stemvoice-dyslexia-font', JSON.stringify(isDyslexiaFont));
+    
+    // Debug logging
+    console.log('Dyslexia font toggled:', isDyslexiaFont);
+    console.log('Body classes:', document.body.className);
   }, [isDyslexiaFont, isContrastMode, textSpacing]);
 
   useEffect(() => {
@@ -410,7 +450,20 @@ Let u = x² + 1, then du = 2x dx
         isDyslexiaFont={isDyslexiaFont}
         isContrastMode={isContrastMode}
         voiceSpeed={voiceSpeed}
-        onToggleDyslexiaFont={() => setIsDyslexiaFont(!isDyslexiaFont)}
+        onToggleDyslexiaFont={() => {
+          const newState = !isDyslexiaFont;
+          setIsDyslexiaFont(newState);
+          toast.success(
+            newState 
+              ? "Dyslexia-friendly font enabled" 
+              : "Dyslexia-friendly font disabled",
+            {
+              description: newState 
+                ? "Using OpenDyslexic font with improved spacing" 
+                : "Switched back to default font"
+            }
+          );
+        }}
         onToggleContrastMode={() => setIsContrastMode(!isContrastMode)}
         onVoiceSpeedChange={setVoiceSpeed}
         onOpenSettings={() => navigate("/settings")}

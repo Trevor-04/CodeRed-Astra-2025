@@ -33,15 +33,15 @@ export function AccessibilityBar({
             onClick={onToggleDyslexiaFont}
             className={`cursor-pointer gap-2 min-h-[48px] min-w-[48px] px-4 lg:px-6 rounded-lg text-base transition-all duration-200 ${
               isDyslexiaFont 
-                ? 'bg-[#1D4ED8] text-white hover:bg-[#1E40AF]' 
+                ? 'bg-[#10B981] text-white hover:bg-[#059669] shadow-lg border-2 border-[#10B981]' 
                 : 'bg-white text-[#1D4ED8] border-2 border-[#1D4ED8] hover:bg-[#F8FAFC]'
             }`}
             aria-pressed={isDyslexiaFont}
             aria-label="Toggle dyslexia-friendly font"
           >
             <Type className="w-5 h-5" aria-hidden="true" />
-            <span className="hidden sm:inline">Dyslexia Font</span>
-            <span className="sm:hidden">Font</span>
+            <span className="hidden sm:inline">{isDyslexiaFont ? '✓ Dyslexia Font' : 'Dyslexia Font'}</span>
+            <span className="sm:hidden">{isDyslexiaFont ? '✓ Font' : 'Font'}</span>
           </Button>
 
           {/* <Button
