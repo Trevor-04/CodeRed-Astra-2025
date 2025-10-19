@@ -3,7 +3,7 @@ import { Volume2 } from 'lucide-react';
 export function Header() {
   return (
     <header 
-      className="bg-[#1D4ED8] overflow-auto py-8 lg:py-12 px-6 lg:px-12 shadow-md sticky top-0 z-50" 
+      className="bg-[#1D4ED8] overflow-auto py-2 lg:py-4 px-6 lg:px-12 shadow-md sticky top-0 z-50" 
       role="banner"
     >
       <div className="container mx-auto text-center max-w-[1200px]">
