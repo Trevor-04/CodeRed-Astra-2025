@@ -1,7 +1,7 @@
 import { publicAnonKey } from '../../utils/supabase/info';
 
 const API_BASE = 'https://bzrpuvripwivsiongdst.supabase.co/functions/v1/make-server-b67fdaad';
-const FALLBACK_API_BASE = 'http://localhost:5432/api'; // Node.js backend fallback
+const FALLBACK_API_BASE = 'http://localhost:3000/api'; // Node.js backend fallback
 
 export interface Upload {
   id: string;

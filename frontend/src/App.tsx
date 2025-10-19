@@ -22,7 +22,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 
 // Hardcoded user ID for development
 const CURRENT_USER_ID = "123e4567-e89b-12d3-a456-426614174000";
-const API_BASE_URL = "http://localhost:5432/api";
+const API_BASE_URL = "http://localhost:3000/api";
 
 interface Upload {
   id: string;
