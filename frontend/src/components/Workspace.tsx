@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
@@ -18,6 +18,7 @@ interface Upload {
   filePath: string;
   originalName: string;
   createdAt: string;
+  parsedText?: string;
 }
 
 interface ChatMessage {
@@ -29,7 +30,7 @@ interface ChatMessage {
 
 interface WorkspaceProps {
   upload: Upload;
-  extractedContent: string;
+  extractedContent?: string; // Keep for backwards compatibility
   onClose?: () => void;
 }
 
@@ -38,6 +39,25 @@ export function Workspace({
   extractedContent,
   onClose,
 }: WorkspaceProps) {
+  // Use parsedText from upload if available, otherwise fall back to extractedContent prop
+  const content = upload.parsedText || extractedContent || "No content available";
+
+  // Log workspace data when opened
+  useEffect(() => {
+    console.log("\n🔍 WORKSPACE OPENED:");
+    console.log("Upload Details:", {
+      id: upload.id,
+      name: upload.originalName,
+      type: upload.type,
+      filePath: upload.filePath,
+      createdAt: upload.createdAt,
+    });
+    console.log("Content Source:", upload.parsedText ? "upload.parsedText" : extractedContent ? "extractedContent prop" : "none");
+    console.log("Content Length:", content.length, "characters");
+    console.log("Content Preview (first 200 chars):", content.substring(0, 200));
+    console.log("Full Content:", content);
+  }, [upload, extractedContent, content]);
+
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       id: "1",
@@ -68,7 +88,7 @@ export function Workspace({
 
       if (inputMessage.toLowerCase().includes("summary")) {
         aiResponse =
-          "Here's a summary: " + extractedContent.substring(0, 200) + "...";
+          "Here's a summary: " + content.substring(0, 200) + "...";
       } else if (inputMessage.toLowerCase().includes("quiz")) {
         aiResponse =
           "Here are 3 quiz questions based on the content:\n\n1. What is the main topic discussed?\n2. Can you explain the key concept?\n3. How would you apply this in practice?";
@@ -127,7 +147,7 @@ export function Workspace({
                 <h3 className="text-lg font-semibold mb-4 text-gray-900">
                   Extracted Content
                 </h3>
-                {extractedContent.split("\n\n").map((paragraph, index) => (
+                {content.split("\n\n").map((paragraph, index) => (
                   <p key={index} className="mb-4 text-gray-700 leading-relaxed">
                     {paragraph}
                   </p>
