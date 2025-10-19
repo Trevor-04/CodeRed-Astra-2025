@@ -5,10 +5,9 @@ import { useState, useRef } from "react";
 
 interface UploadAreaProps {
   onUpload: (file: File) => void;
-  onBack: () => void;
 }
 
-export function UploadArea({ onUpload, onBack }: UploadAreaProps) {
+export function UploadArea({ onUpload }: UploadAreaProps) {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);

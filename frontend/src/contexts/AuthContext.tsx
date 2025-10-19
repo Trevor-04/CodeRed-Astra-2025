@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import type { Session, User } from '@supabase/supabase-js';
 
@@ -9,7 +9,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 interface AuthContextType {
   session: Session | null;
   user: User | null;
-  supabase: ReturnType<typeof createClient>;
+  supabase: ReturnType<typeof createClient<any, 'public', any>>;
   loading: boolean;
 }
 

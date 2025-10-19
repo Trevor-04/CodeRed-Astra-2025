@@ -6,12 +6,10 @@ import { Keyboard, Volume2, Type, Info } from 'lucide-react';
 
 interface SettingsPageProps {
   isDyslexiaFont: boolean;
-  isContrastMode: boolean;
   highlightAsSpoken: boolean;
   voiceSpeed: number;
   textSpacing: number;
   onToggleDyslexiaFont: () => void;
-  onToggleContrastMode: () => void;
   onToggleHighlightAsSpoken: () => void;
   onVoiceSpeedChange: (speed: number) => void;
   onTextSpacingChange: (spacing: number) => void;
@@ -20,12 +18,10 @@ interface SettingsPageProps {
 
 export function SettingsPage({
   isDyslexiaFont,
-  isContrastMode,
   highlightAsSpoken,
   voiceSpeed,
   textSpacing,
   onToggleDyslexiaFont,
-  onToggleContrastMode,
   onToggleHighlightAsSpoken,
   onVoiceSpeedChange,
   onTextSpacingChange,

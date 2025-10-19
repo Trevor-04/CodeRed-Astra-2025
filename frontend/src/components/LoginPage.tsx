@@ -13,7 +13,7 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
     setLoading(true);
     setError("");
     // Try sign in
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+    const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -29,7 +29,11 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
         } else {
           // Insert into users table after sign up
           if (signUpData.user?.id) {
-            await supabase.from('users').insert({ id: signUpData.user.id });
+            try {
+              await supabase.from('users').insert({ id: signUpData.user.id });
+            } catch (insertError) {
+              console.warn('User may already exist in users table:', insertError);
+            }
           }
           // Auth context will automatically update session
           onLogin();

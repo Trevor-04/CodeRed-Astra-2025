@@ -1,4 +1,4 @@
-import { Settings, Volume2, Moon, Sun, Type } from 'lucide-react';
+import { Settings, Volume2, Type } from 'lucide-react';
 import { Button } from './ui/button';
 
 interface AccessibilityBarProps {

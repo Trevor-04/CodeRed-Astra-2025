@@ -6,7 +6,6 @@ import { AccessibilityBar } from "./components/AccessibilityBar";
 import { Dashboard } from "./components/Dashboard";
 import { UploadPage } from "./components/UploadPage";
 import { TestRecordingsPage } from "./components/TestRecordingsPage";
-import { ProcessingScreen } from "./components/ProcessingScreen";
 import { AudioPlayer } from "./components/AudioPlayer";
 import { SettingsPage } from "./components/SettingsPage";
 import { PastLessons } from "./components/PastLessons";
@@ -56,7 +55,7 @@ interface Lesson {
 
 function AppContent() {
   const navigate = useNavigate();
-  const { session, user, supabase, loading } = useAuth();
+  const { user, supabase, loading } = useAuth();
 
   const [isDyslexiaFont, setIsDyslexiaFont] = useState(() => {
     // Load saved preference from localStorage
@@ -133,11 +132,7 @@ function AppContent() {
     navigate("/");
   };
 
-  // Handle logout
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/login");
-  };
+
 
   // Log mock data state for debugging
   useEffect(() => {
@@ -488,7 +483,7 @@ const parseFileContent = async (file: File, rawOnly: boolean = false): Promise<s
                     />
                     <Route
                       path="/settings"
-                      element={<SettingsPage isDyslexiaFont={isDyslexiaFont} isContrastMode={isContrastMode} highlightAsSpoken={highlightAsSpoken} voiceSpeed={voiceSpeed} textSpacing={textSpacing} onToggleDyslexiaFont={() => setIsDyslexiaFont(!isDyslexiaFont)} onToggleContrastMode={() => setIsContrastMode(!isContrastMode)} onToggleHighlightAsSpoken={() => setHighlightAsSpoken(!highlightAsSpoken)} onVoiceSpeedChange={setVoiceSpeed} onTextSpacingChange={setTextSpacing} onBack={() => navigate("/")} />}
+                      element={<SettingsPage isDyslexiaFont={isDyslexiaFont} highlightAsSpoken={highlightAsSpoken} voiceSpeed={voiceSpeed} textSpacing={textSpacing} onToggleDyslexiaFont={() => setIsDyslexiaFont(!isDyslexiaFont)} onToggleHighlightAsSpoken={() => setHighlightAsSpoken(!highlightAsSpoken)} onVoiceSpeedChange={setVoiceSpeed} onTextSpacingChange={setTextSpacing} onBack={() => navigate("/")} />}
                     />
                     <Route
                       path="/lessons"
