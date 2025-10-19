@@ -98,10 +98,10 @@ export function Workspace({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4">-
       {/* Back Button */}
-      <Button variant="outline" onClick={onClose} className="gap-2">
-        ← Back to Uploads
+      <Button variant="outline" onClick={onClose} className="cursor-pointer gap-2">
+       ← Back to Uploads
       </Button>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

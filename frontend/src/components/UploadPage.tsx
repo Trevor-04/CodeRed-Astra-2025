@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Workspace } from "./Workspace";
 import { UploadArea } from "./uploadArea";
+import { RecordingProcessor } from "./RecordingProcessor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+
 import {
   Card,
   CardContent,
@@ -9,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
+
 
 interface Upload {
   id: string;
@@ -38,30 +41,6 @@ export function UploadPage({
 
   // Tab state with colors
   const [activeTab, setActiveTab] = useState("notes");
-  
-  const tabConfig = {
-    notes: {
-      value: "notes",
-      color: "blue",
-      bgColor: "bg-blue-50",
-      borderColor: "border-blue-200",
-      hoverColor: "hover:bg-blue-100"
-    },
-    recordings: {
-      value: "recordings", 
-      color: "purple",
-      bgColor: "bg-purple-50",
-      borderColor: "border-purple-200", 
-      hoverColor: "hover:bg-purple-100"
-    },
-    math: {
-      value: "math",
-      color: "green", 
-      bgColor: "bg-green-50",
-      borderColor: "border-green-200",
-      hoverColor: "hover:bg-green-100"
-    }
-  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -177,28 +156,20 @@ export function UploadPage({
               </CardTitle>
               <CardDescription>
                 Upload lecture recordings, voice notes, or video files. We'll
-                transcribe them automatically.
+                transcribe them automatically using ElevenLabs Speech-to-Text.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-indigo-400 transition-colors cursor-pointer">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
-                    <span className="text-3xl">🎤</span>
-                  </div>
-                  <div>
-                    <p className="text-lg font-semibold text-gray-900 mb-1">
-                      Drop audio/video files here
-                    </p>
-                    <p className="text-gray-600">
-                      Supports MP3, WAV, MP4, MOV (max 100MB)
-                    </p>
-                  </div>
-                  <button className="cursor-pointer px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                    Browse Files
-                  </button>
-                </div>
-              </div>
+              <RecordingProcessor 
+                onTranscriptionComplete={(result) => {
+                  console.log('Transcription completed:', result);
+                  // In a real app, you might save this to the backend or update state
+                }}
+                onError={(error) => {
+                  console.error('Transcription error:', error);
+                  // Handle error (show notification, etc.)
+                }}
+              />
 
               {/* Recent Recording Uploads */}
               {!selectedWorkspace && (
