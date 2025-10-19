@@ -175,6 +175,8 @@ app.get("/", (req, res) => {
       health: "/api/health",
       transcripts: "/api/transcripts",
       upload: "/api/upload",
+      uploads: "/api/uploads",
+      "recent-recordings": "/api/recent-recordings",
       "create-demo-user": "/api/create-demo-user",
     },
   });
@@ -437,6 +439,65 @@ app.post("/api/upload", upload.single('file'), async (req, res) => {
   }
 });
 
+// Get recent recordings (video and audio only) with pagination
+app.get("/api/recent-recordings", async (req, res) => {
+  try {
+    const { userId = 'anonymous', page = 1, limit = 5 } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+
+    if (supabase) {
+      const query = supabase
+        .from('uploads')
+        .select('*', { count: 'exact' })
+        .eq('user_id', userId)
+        .in('type', ['video', 'audio'])
+        .order('created_at', { ascending: false })
+        .range(offset, offset + parseInt(limit) - 1);
+
+      const { data, error, count } = await query;
+
+      if (error) {
+        console.error('Supabase error:', error);
+        return res.status(500).json({
+          error: "Failed to fetch recent recordings",
+          details: error.message
+        });
+      }
+
+      const totalPages = Math.ceil((count || 0) / parseInt(limit));
+
+      res.json({
+        uploads: data || [],
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages,
+          totalCount: count || 0,
+          hasNext: parseInt(page) < totalPages,
+          hasPrevious: parseInt(page) > 1
+        }
+      });
+    } else {
+      // Mock data when Supabase is not configured
+      res.json({
+        uploads: [],
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalCount: 0,
+          hasNext: false,
+          hasPrevious: false
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching recent recordings:', error);
+    res.status(500).json({
+      error: "Internal server error",
+      message: error.message
+    });
+  }
+});
+
 // Get uploads with pagination
 app.get("/api/uploads", async (req, res) => {
   try {
@@ -452,7 +513,13 @@ app.get("/api/uploads", async (req, res) => {
         .range(offset, offset + parseInt(limit) - 1);
 
       if (type) {
-        query = query.eq('type', type);
+        // Support multiple types separated by comma
+        const types = type.split(',').map(t => t.trim());
+        if (types.length === 1) {
+          query = query.eq('type', type);
+        } else {
+          query = query.in('type', types);
+        }
       }
 
       const { data, error, count } = await query;
