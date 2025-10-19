@@ -113,7 +113,7 @@ export function AudioPlayer({
     <main className="container mx-auto px-6 lg:px-12 py-6 lg:py-12 max-w-[1200px]" role="main">
       <Button
         onClick={onBack}
-        className="mb-8 min-h-[48px] px-6 bg-white text-[#1D4ED8] border-2 border-[#1D4ED8] hover:bg-[#F8FAFC] rounded-lg transition-all duration-200"
+        className="cursor-pointer mb-8 min-h-[48px] px-6 bg-white text-[#1D4ED8] border-2 border-[#1D4ED8] hover:bg-[#F8FAFC] rounded-lg transition-all duration-200"
         aria-label="Go back to dashboard"
       >
         ← Back to Dashboard
@@ -144,7 +144,7 @@ export function AudioPlayer({
             {/* Large central play/pause button - 64px as per guidelines */}
             <Button
               onClick={togglePlay}
-              className="w-16 h-16 lg:w-24 lg:h-24 rounded-full bg-[#1D4ED8] hover:bg-[#1E40AF] text-white shadow-lg transition-all duration-200 hover:scale-105 flex items-center justify-center p-0"
+              className="cursor-pointer w-16 h-16 lg:w-24 lg:h-24 rounded-full bg-[#1D4ED8] hover:bg-[#1E40AF] text-white shadow-lg transition-all duration-200 hover:scale-105 flex items-center justify-center p-0"
               aria-label={isPlaying ? 'Pause audio - Press Space' : 'Play audio - Press Space'}
             >
               {isPlaying ? (
@@ -177,7 +177,7 @@ export function AudioPlayer({
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto px-4 sm:px-0">
               <Button
                 onClick={restart}
-                className="gap-2 min-h-[48px] px-6 bg-white text-[#1D4ED8] border-2 border-[#1D4ED8] hover:bg-[#F8FAFC] rounded-lg transition-all duration-200"
+                className="cursor-pointer gap-2 min-h-[48px] px-6 bg-white text-[#1D4ED8] border-2 border-[#1D4ED8] hover:bg-[#F8FAFC] rounded-lg transition-all duration-200"
                 aria-label="Restart audio from beginning"
               >
                 <RotateCcw className="w-5 h-5" aria-hidden="true" />
@@ -190,7 +190,7 @@ export function AudioPlayer({
                   a.download = `lesson-${lessonId}.mp3`;
                   a.click();
                 }}
-                className="gap-2 min-h-[48px] px-6 bg-white text-[#1D4ED8] border-2 border-[#1D4ED8] hover:bg-[#F8FAFC] rounded-lg transition-all duration-200"
+                className="cursor-pointer gap-2 min-h-[48px] px-6 bg-white text-[#1D4ED8] border-2 border-[#1D4ED8] hover:bg-[#F8FAFC] rounded-lg transition-all duration-200"
                 aria-label="Download audio file"
               >
                 <Download className="w-5 h-5" aria-hidden="true" />

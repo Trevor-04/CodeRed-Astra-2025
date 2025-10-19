@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { Workspace } from "./Workspace";
 import { UploadArea } from "./uploadArea";
+import { RecordingProcessor } from "./RecordingProcessor";
+import { RecentRecordings } from "./RecentRecordings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { type Upload as DBUpload } from "../services/uploadService";
+
 import {
   Card,
   CardContent,
@@ -9,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
+
 
 interface Upload {
   id: string;
@@ -27,6 +32,17 @@ interface UploadPageProps {
   mockExtractedContent: Record<string, string>;
 }
 
+// Helper function to convert DB upload to component upload format
+const convertDBUploadToUpload = (dbUpload: DBUpload): Upload & { parsed_text?: string } => ({
+  id: dbUpload.id,
+  userId: dbUpload.user_id,
+  type: dbUpload.type,
+  filePath: dbUpload.file_path,
+  originalName: dbUpload.original_name,
+  createdAt: dbUpload.created_at,
+  parsed_text: dbUpload.parsed_text, // Include the transcribed text
+});
+
 export function UploadPage({
   onBack,
   onUpload,
@@ -37,24 +53,37 @@ export function UploadPage({
     null
   );
 
+  // Tab state with colors
+  const [activeTab, setActiveTab] = useState("notes");
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <button
         onClick={onBack}
-        className="mb-6 flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-semibold transition-colors"
+        className="cursor-pointer mb-6 flex items-center gap-2 text-[#1D4ED8]
+         hover:text-[#1E40AF] border-2 border-[#1D4ED8] p-2 rounded-lg min-h-[48px] font-semibold transition-colors"
       >
         ← Back to Dashboard
       </button>
 
-      <Tabs defaultValue="notes" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-8">
-          <TabsTrigger value="notes" className="text-lg">
+          <TabsTrigger 
+            value="notes" 
+            className={`text-lg cursor-pointer ${activeTab === 'notes' ? 'bg-blue-100 text-blue-700' : ''}`}
+          >
             📄 Notes
           </TabsTrigger>
-          <TabsTrigger value="recordings" className="text-lg">
+          <TabsTrigger 
+            value="recordings" 
+            className={`text-lg cursor-pointer ${activeTab === 'recordings' ? 'bg-purple-100 text-purple-700' : ''}`}
+          >
             🎤 Recordings
           </TabsTrigger>
-          <TabsTrigger value="math" className="text-lg">
+          <TabsTrigger 
+            value="math" 
+            className={`text-lg cursor-pointer ${activeTab === 'math' ? 'bg-green-100 text-green-700' : ''}`}
+          >
             ∑ Math
           </TabsTrigger>
         </TabsList>
@@ -141,28 +170,20 @@ export function UploadPage({
               </CardTitle>
               <CardDescription>
                 Upload lecture recordings, voice notes, or video files. We'll
-                transcribe them automatically.
+                transcribe them automatically using ElevenLabs Speech-to-Text.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-indigo-400 transition-colors cursor-pointer">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
-                    <span className="text-3xl">🎤</span>
-                  </div>
-                  <div>
-                    <p className="text-lg font-semibold text-gray-900 mb-1">
-                      Drop audio/video files here
-                    </p>
-                    <p className="text-gray-600">
-                      Supports MP3, WAV, MP4, MOV (max 100MB)
-                    </p>
-                  </div>
-                  <button className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                    Browse Files
-                  </button>
-                </div>
-              </div>
+              <RecordingProcessor 
+                onTranscriptionComplete={(result) => {
+                  console.log('Transcription completed:', result);
+                  // In a real app, you might save this to the backend or update state
+                }}
+                onError={(error) => {
+                  console.error('Transcription error:', error);
+                  // Handle error (show notification, etc.)
+                }}
+              />
 
               {/* Recent Recording Uploads */}
               {!selectedWorkspace && (
@@ -170,46 +191,13 @@ export function UploadPage({
                   <h3 className="text-lg font-semibold mb-4">
                     Recent Recordings
                   </h3>
-                  <div className="space-y-3">
-                    {mockUploads
-                      .filter(
-                        (upload) =>
-                          upload.type === "video" || upload.type === "audio"
-                      )
-                      .map((upload) => (
-                        <div
-                          key={upload.id}
-                          onClick={() => setSelectedWorkspace(upload)}
-                          className="flex items-center justify-between p-4 bg-purple-50 rounded-lg border border-purple-200 hover:bg-purple-100 cursor-pointer transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="text-2xl">
-                              {upload.type === "video" ? "🎥" : "🔊"}
-                            </span>
-                            <div>
-                              <p className="font-semibold text-gray-900">
-                                {upload.originalName}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                Uploaded{" "}
-                                {new Date(upload.createdAt).toLocaleString(
-                                  "en-US",
-                                  {
-                                    month: "short",
-                                    day: "numeric",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  }
-                                )}
-                              </p>
-                            </div>
-                          </div>
-                          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                            Transcribed
-                          </span>
-                        </div>
-                      ))}
-                  </div>
+                  <RecentRecordings 
+                    onSelectRecording={(recording) => {
+                      // Convert DBUpload to Upload format
+                      setSelectedWorkspace(convertDBUploadToUpload(recording));
+                    }}
+                    userId="123e4567-e89b-12d3-a456-426614174000" // Use the same UUID as for saving uploads
+                  />
                 </div>
               )}
 
@@ -221,7 +209,10 @@ export function UploadPage({
                     <Workspace
                       upload={selectedWorkspace}
                       extractedContent={
-                        mockExtractedContent[selectedWorkspace.id]
+                        // Use the parsed_text from the database recording, fallback to mock data
+                        (selectedWorkspace as any).parsed_text || 
+                        mockExtractedContent[selectedWorkspace.id] ||
+                        "No transcription available for this recording."
                       }
                       onClose={() => setSelectedWorkspace(null)}
                     />
@@ -257,7 +248,7 @@ export function UploadPage({
                       Supports JPG, PNG, HEIC (handwritten or printed equations)
                     </p>
                   </div>
-                  <button className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                  <button className="cursor-pointer px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                     Browse Images
                   </button>
                 </div>
