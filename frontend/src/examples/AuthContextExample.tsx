@@ -3,14 +3,14 @@
 import { useAuth } from '../contexts/AuthContext';
 
 export function ExampleComponent() {
-  const { user, session, supabase } = useAuth();
+  const { user, supabase } = useAuth();
 
   // Access the logged-in user
   const userId = user?.id;
   const userEmail = user?.email;
 
   // Access the session token
-  const accessToken = session?.access_token;
+
 
   // Use supabase client for queries
   const fetchUserData = async () => {

@@ -114,7 +114,7 @@ export function UploadPage({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <UploadArea onUpload={onUpload} onBack={onBack} />
+              <UploadArea onUpload={onUpload} />
 
               {/* Recent Notes Uploads */}
               {!selectedWorkspace && (

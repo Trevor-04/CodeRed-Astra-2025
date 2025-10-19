@@ -9,7 +9,8 @@ interface AudioPlayerProps {
   mathContent: string;
   lessonId: string;
   highlightAsSpoken: boolean;
-  onBack: () => void;
+  onBack?: () => void;
+  onNext?: () => void;
 }
 
 export function AudioPlayer({ 
@@ -17,8 +18,7 @@ export function AudioPlayer({
   extractedText, 
   mathContent, 
   lessonId,
-  highlightAsSpoken,
-  onBack 
+  highlightAsSpoken
 }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -95,7 +95,7 @@ export function AudioPlayer({
 
   const renderHighlightedText = () => {
     const words = extractedText.split(' ');
-    return words.map((word, index) => (
+    return words.map((word: string, index: number) => (
       <span
         key={index}
         className={`transition-all duration-150 ${
