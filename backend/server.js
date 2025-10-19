@@ -1,3 +1,4 @@
+
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -13,7 +14,11 @@ const PORT = process.env.PORT || 3000;
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+
+const supabase = createClient(
+  supabaseUrl,
+  process.env.SUPABASE_SERVICE_KEY // must be service role key, not anon!
+);
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
@@ -21,9 +26,15 @@ const upload = multer({
   storage: storage,
   limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit
   fileFilter: (req, file, cb) => {
+    // Allow audio, video, PDF, images, and common docs
     const allowedTypes = [
       'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/webm',
-      'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'
+      'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo',
+      'application/pdf',
+      'image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp',
+      'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     ];
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
@@ -47,7 +58,27 @@ app.get("/api/health", (req, res) => {
     supabaseConnected: !!supabase,
   });
 });
-
+// Delete an upload by id
+app.delete("/api/uploads/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ error: "Missing upload id" });
+    }
+    const { error } = await supabase
+      .from('uploads')
+      .delete()
+      .eq('id', id);
+    if (error) {
+      console.error('Supabase delete error:', error);
+      return res.status(500).json({ error: error.message });
+    }
+    res.json({ success: true, message: "Upload deleted successfully" });
+  } catch (err) {
+    console.error('Delete upload error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 // Create demo user endpoint
 app.post("/api/create-demo-user", async (req, res) => {
   try {
@@ -561,6 +592,45 @@ app.post("/api/save-upload", async (req, res) => {
       error: "Internal server error",
       message: error.message
     });
+  }
+});
+
+
+// API route to upload a file to Supabase Storage bucket and return public URL
+app.post('/api/upload-to-bucket', upload.single('file'), async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    if (!req.file || !userId) {
+      return res.status(400).json({ error: 'Missing file or userId' });
+    }
+    if (!supabase) {
+      return res.status(500).json({ error: 'Supabase not configured' });
+    }
+    const file = req.file;
+    const filePath = `${userId}/${Date.now()}_${file.originalname}`;
+    const { data, error } = await supabase.storage
+      .from('uploads')
+      .upload(filePath, file.buffer, { upsert: true, contentType: file.mimetype });
+    if (error) {
+      console.error('Supabase storage upload error:', error);
+      return res.status(500).json({ error: error.message });
+    }
+    let { publicURL } = supabase.storage.from('uploads').getPublicUrl(filePath);
+    if (!publicURL) {
+      // Bucket is private, generate a signed URL
+      const { data: signedData, error: signedError } = await supabase.storage
+        .from('uploads')
+        .createSignedUrl(filePath, 3600); // 1 hour
+      if (signedError) {
+        console.error('Supabase signed URL error:', signedError);
+        return res.status(500).json({ error: signedError.message });
+      }
+      publicURL = signedData.signedUrl;
+    }
+    res.json({ success: true, publicURL, filePath });
+  } catch (error) {
+    console.error('Error uploading to bucket:', error);
+    res.status(500).json({ error: 'Internal server error', message: error.message });
   }
 });
 

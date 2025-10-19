@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Workspace } from "./Workspace";
 import { UploadArea } from "./uploadArea";
 import { RecordingProcessor } from "./RecordingProcessor";
@@ -46,15 +46,17 @@ const convertDBUploadToUpload = (dbUpload: DBUpload): Upload & { parsed_text?: s
 export function UploadPage({
   onBack,
   onUpload,
-  mockUploads,
+  mockUploads: initialMockUploads,
   mockExtractedContent,
 }: UploadPageProps) {
-  const [selectedWorkspace, setSelectedWorkspace] = useState<Upload | null>(
-    null
-  );
-
+  const [selectedWorkspace, setSelectedWorkspace] = useState<Upload | null>(null);
   // Tab state with colors
   const [activeTab, setActiveTab] = useState("notes");
+
+  useEffect(() => {
+    // Reset workspace when changing tabs
+
+  }, [selectedWorkspace]);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -108,15 +110,17 @@ export function UploadPage({
                 <div className="mt-8">
                   <h3 className="text-lg font-semibold mb-4">Recent Uploads</h3>
                   <div className="space-y-3">
-                    {mockUploads
+                    {initialMockUploads
                       .filter((upload) => upload.type === "PDF")
                       .map((upload) => (
                         <div
                           key={upload.id}
-                          onClick={() => setSelectedWorkspace(upload)}
-                          className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 cursor-pointer transition-colors"
+                          className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors"
                         >
-                          <div className="flex items-center gap-3">
+                          <div
+                            className="flex items-center gap-3 cursor-pointer"
+                            onClick={() => setSelectedWorkspace(upload)}
+                          >
                             <span className="text-2xl">📄</span>
                             <div>
                               <p className="font-semibold text-gray-900">
@@ -136,9 +140,36 @@ export function UploadPage({
                               </p>
                             </div>
                           </div>
-                          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                            Processed
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                              Processed
+                            </span>
+                            <button
+                              className="ml-2 px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-xs font-semibold"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if (window.confirm('Delete this upload?')) {
+                                  try {
+                                    const response = await fetch(`http://localhost:3000/api/uploads/${upload.id}`, {
+                                      method: 'DELETE',
+                                    });
+                                    if (response.ok) {
+                                      // Remove from mockUploads
+                                      setSelectedWorkspace((prev: Upload | null) => prev && prev.id === upload.id ? null : prev);
+                                      // To fully update after delete, trigger a reload in parent (App.tsx)
+                                    } else {
+                                      alert('Failed to delete upload');
+                                    }
+                                  } catch (err) {
+                                    console.error(err);
+                                    alert('Error deleting upload');
+                                  }
+                                }
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
                       ))}
                   </div>
@@ -210,7 +241,7 @@ export function UploadPage({
                       upload={selectedWorkspace}
                       extractedContent={
                         // Use the parsed_text from the database recording, fallback to mock data
-                        (selectedWorkspace as any).parsed_text || 
+                          (selectedWorkspace as Upload).parsedText || 
                         mockExtractedContent[selectedWorkspace.id] ||
                         "No transcription available for this recording."
                       }
@@ -261,15 +292,17 @@ export function UploadPage({
                     Recent Math Uploads
                   </h3>
                   <div className="space-y-3">
-                    {mockUploads
-                      .filter((upload) => upload.type === "math_image")
-                      .map((upload) => (
+                    {initialMockUploads
+                      .filter((upload: Upload) => upload.type === "math_image")
+                      .map((upload: Upload) => (
                         <div
                           key={upload.id}
-                          onClick={() => setSelectedWorkspace(upload)}
-                          className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200 hover:bg-green-100 cursor-pointer transition-colors"
+                          className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200 hover:bg-green-100 transition-colors"
                         >
-                          <div className="flex items-center gap-3">
+                          <div
+                            className="flex items-center gap-3 cursor-pointer"
+                            onClick={() => setSelectedWorkspace(upload)}
+                          >
                             <span className="text-2xl">📐</span>
                             <div>
                               <p className="font-semibold text-gray-900">
@@ -289,9 +322,33 @@ export function UploadPage({
                               </p>
                             </div>
                           </div>
-                          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                            Converted
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                              Converted
+                            </span>
+                            <button
+                              className="ml-2 px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-xs font-semibold"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if (window.confirm('Delete this upload?')) {
+                                  try {
+                                    const response = await fetch(`http://localhost:3000/api/uploads/${upload.id}`, {
+                                      method: 'DELETE',
+                                    });
+                                    if (response.ok) {
+                                      // To fully update after delete, trigger a reload in parent (App.tsx)
+                                    } else {
+                                      alert('Failed to delete upload');
+                                    }
+                                  } catch {
+                                    alert('Error deleting upload');
+                                  }
+                                }
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
                       ))}
                   </div>
