@@ -1,11 +1,23 @@
 @import "tailwindcss";
 
+/* Import Google Fonts as primary fallback for dyslexia-friendly fonts */
+@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@300;400;700&display=swap');
+
 /* OpenDyslexic font - dyslexia-friendly */
 @font-face {
   font-family: 'OpenDyslexic';
   src: url('https://fonts.cdnfonts.com/s/13317/OpenDyslexic-Regular.woff') format('woff');
   font-weight: normal;
   font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('https://fonts.cdnfonts.com/s/13317/OpenDyslexic-Bold.woff') format('woff');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
 }
 
 @theme {
@@ -55,12 +67,39 @@ body {
   color: var(--color-text-primary);
   line-height: 1.5; /* Typography system guideline */
   min-height: 100vh;
+  transition: font-family 0.3s ease, letter-spacing 0.3s ease, word-spacing 0.3s ease; /* Smooth font transition */
+}
+
+/* Dyslexia-friendly font mode - MAXIMUM specificity to override everything */
+body.dyslexia-font,
+body.dyslexia-font *,
+body.dyslexia-font h1,
+body.dyslexia-font h2,
+body.dyslexia-font h3,
+body.dyslexia-font h4,
+body.dyslexia-font h5,
+body.dyslexia-font h6,
+body.dyslexia-font button,
+body.dyslexia-font span,
+body.dyslexia-font p,
+body.dyslexia-font div,
+body.dyslexia-font a,
+body.dyslexia-font label,
+body.dyslexia-font input,
+body.dyslexia-font select,
+body.dyslexia-font textarea {
+  font-family: 'Comic Sans MS', 'Trebuchet MS', 'Verdana', cursive, sans-serif !important;
+  letter-spacing: 0.08em !important;
 }
 
 body.dyslexia-font {
-  font-family: 'OpenDyslexic', 'Comic Sans MS', sans-serif;
-  letter-spacing: 0.12em;
-  line-height: 1.75; /* Upper range for dyslexia mode */
+  font-family: 'Comic Sans MS', 'Trebuchet MS', 'Verdana', cursive, sans-serif !important;
+  letter-spacing: 0.12em !important;
+  line-height: 1.75 !important;
+  word-spacing: 0.16em !important;
+  /* Visual indicator that dyslexia mode is active */
+  border-top: 4px solid #10B981 !important;
+  background-color: #f0f9ff !important;
 }
 
 body.contrast-mode {

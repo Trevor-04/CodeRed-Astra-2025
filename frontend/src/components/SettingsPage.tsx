@@ -35,7 +35,7 @@ export function SettingsPage({
     <main className="container mx-auto px-6 lg:px-12 py-6 lg:py-12 max-w-[1200px]" role="main">
       <Button
         onClick={onBack}
-        className="mb-8 min-h-[48px] px-6 bg-white text-[#1D4ED8] border-2 border-[#1D4ED8] hover:bg-[#F8FAFC] rounded-lg transition-all duration-200"
+        className="cursor-pointer mb-8 min-h-[48px] px-6 bg-white text-[#1D4ED8] border-2 border-[#1D4ED8] hover:bg-[#F8FAFC] rounded-lg transition-all duration-200"
         aria-label="Go back to dashboard"
       >
         ← Back to Dashboard
@@ -130,7 +130,7 @@ export function SettingsPage({
               id="voice-speed-settings"
               value={voiceSpeed}
               onChange={(e) => onVoiceSpeedChange(Number(e.target.value))}
-              className="w-full bg-white border-2 border-[#E2E8F0] rounded-lg px-4 py-4 text-lg text-[#0F172A] min-h-[48px]"
+              className="cursor-pointer w-full bg-white border-2 border-[#E2E8F0] rounded-lg px-4 py-4 text-lg text-[#0F172A] min-h-[48px]"
               aria-label="Voice speed control"
             >
               <option value={0.5}>0.5x - Very Slow</option>

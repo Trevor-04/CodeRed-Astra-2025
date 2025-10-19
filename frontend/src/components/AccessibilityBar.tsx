@@ -13,10 +13,10 @@ interface AccessibilityBarProps {
 
 export function AccessibilityBar({
   isDyslexiaFont,
-  isContrastMode,
+  // isContrastMode,
   voiceSpeed,
   onToggleDyslexiaFont,
-  onToggleContrastMode,
+  // onToggleContrastMode,
   onVoiceSpeedChange,
   onOpenSettings,
 }: AccessibilityBarProps) {
@@ -31,22 +31,22 @@ export function AccessibilityBar({
           {/* Primary buttons with guideline styling */}
           <Button
             onClick={onToggleDyslexiaFont}
-            className={`gap-2 min-h-[48px] min-w-[48px] px-4 lg:px-6 rounded-lg text-base transition-all duration-200 ${
+            className={`cursor-pointer gap-2 min-h-[48px] min-w-[48px] px-4 lg:px-6 rounded-lg text-base transition-all duration-200 ${
               isDyslexiaFont 
-                ? 'bg-[#1D4ED8] text-white hover:bg-[#1E40AF]' 
+                ? 'bg-[#10B981] text-white hover:bg-[#059669] shadow-lg border-2 border-[#10B981]' 
                 : 'bg-white text-[#1D4ED8] border-2 border-[#1D4ED8] hover:bg-[#F8FAFC]'
             }`}
             aria-pressed={isDyslexiaFont}
             aria-label="Toggle dyslexia-friendly font"
           >
             <Type className="w-5 h-5" aria-hidden="true" />
-            <span className="hidden cursor-pointer sm:inline">Dyslexia Font</span>
-            <span className="sm:hidden">Font</span>
+            <span className="hidden sm:inline">{isDyslexiaFont ? '✓ Dyslexia Font' : 'Dyslexia Font'}</span>
+            <span className="sm:hidden">{isDyslexiaFont ? '✓ Font' : 'Font'}</span>
           </Button>
 
-          <Button
+          {/* <Button
             onClick={onToggleContrastMode}
-            className={`gap-2 min-h-[48px] min-w-[48px] px-4 lg:px-6 rounded-lg text-base transition-all duration-200 ${
+            className={`cursor-pointer gap-2 min-h-[48px] min-w-[48px] px-4 lg:px-6 rounded-lg text-base transition-all duration-200 ${
               isContrastMode 
                 ? 'bg-[#1D4ED8] text-white hover:bg-[#1E40AF]' 
                 : 'bg-white text-[#1D4ED8] border-2 border-[#1D4ED8] hover:bg-[#F8FAFC]'
@@ -55,9 +55,9 @@ export function AccessibilityBar({
             aria-label="Toggle high contrast mode"
           >
             {isContrastMode ? <Sun className="w-5 h-5" aria-hidden="true" /> : <Moon className="w-5 h-5" aria-hidden="true" />}
-            <span className="hidden cursor-pointer sm:inline">High Contrast</span>
+            <span className="hidden sm:inline">High Contrast</span>
             <span className="sm:hidden">Contrast</span>
-          </Button>
+          </Button> */}
 
           <div className="flex items-center gap-2 px-4 py-2 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0] min-h-[48px]">
             <Volume2 className="w-5 h-5 text-[#3B82F6]" aria-hidden="true" />
@@ -79,7 +79,7 @@ export function AccessibilityBar({
 
         <Button
           onClick={onOpenSettings}
-          className="gap-2 min-h-[48px] min-w-[48px] px-4 lg:px-6 bg-white text-[#1D4ED8] border-2 border-[#1D4ED8] hover:bg-[#F8FAFC] rounded-lg text-base transition-all duration-200"
+          className="cursor-pointer gap-2 min-h-[48px] min-w-[48px] px-4 lg:px-6 bg-white text-[#1D4ED8] border-2 border-[#1D4ED8] hover:bg-[#F8FAFC] rounded-lg text-base transition-all duration-200"
           aria-label="Open settings"
         >
           <Settings className="w-5 h-5" aria-hidden="true" />
