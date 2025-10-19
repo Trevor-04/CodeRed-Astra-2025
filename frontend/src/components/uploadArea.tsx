@@ -1,7 +1,7 @@
-import { Upload, Camera, FileText } from 'lucide-react';
-import { Button } from './ui/button';
-import { Card } from './ui/card';
-import { useState, useRef } from 'react';
+import { Upload, Camera, FileText } from "lucide-react";
+import { Button } from "./ui/button";
+import { Card } from "./ui/card";
+import { useState, useRef } from "react";
 
 interface UploadAreaProps {
   onUpload: (file: File) => void;
@@ -25,7 +25,7 @@ export function UploadArea({ onUpload, onBack }: UploadAreaProps) {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       onUpload(e.dataTransfer.files[0]);
     }
@@ -38,24 +38,22 @@ export function UploadArea({ onUpload, onBack }: UploadAreaProps) {
   };
 
   return (
-    <main className="container mx-auto px-6 lg:px-12 py-6 lg:py-12 max-w-[1200px]" role="main">
+    <main
+      className="container mx-auto px-6 lg:px-12 py-6 lg:py-12 max-w-[1200px]"
+      role="main"
+    >
       {/* Secondary button for back navigation */}
-      <Button
-        onClick={onBack}
-        className="mb-6 lg:mb-8 min-h-[48px] px-6 bg-white text-[#1D4ED8] border-2 border-[#1D4ED8] hover:bg-[#F8FAFC] rounded-lg transition-all duration-200"
-        aria-label="Go back to dashboard"
-      >
-        ← Back to Dashboard
-      </Button>
 
-      <h2 className="text-3xl lg:text-4xl mb-8 lg:mb-12 text-center text-[#0F172A]">Upload Your STEM Content</h2>
+      <h2 className="text-3xl lg:text-4xl mb-8 lg:mb-12 text-center text-[#0F172A]">
+        Upload Your STEM Content
+      </h2>
 
       {/* Drop zone with guideline colors: border #3B82F6, hover fill #EFF6FF */}
       <Card
         className={`bg-white border-2 transition-all duration-200 shadow-lg rounded-lg ${
-          isDragging 
-            ? 'border-[#3B82F6] bg-[#EFF6FF]' 
-            : 'border-dashed border-[#3B82F6]'
+          isDragging
+            ? "border-[#3B82F6] bg-[#EFF6FF]"
+            : "border-dashed border-[#3B82F6]"
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -64,12 +62,15 @@ export function UploadArea({ onUpload, onBack }: UploadAreaProps) {
         aria-label="File upload area"
       >
         <div className="p-12 lg:p-16 text-center">
-          <Upload className="w-20 h-20 lg:w-24 lg:h-24 mx-auto mb-8 text-[#3B82F6]" aria-hidden="true" />
-          
+          <Upload
+            className="w-20 h-20 lg:w-24 lg:h-24 mx-auto mb-8 text-[#3B82F6]"
+            aria-hidden="true"
+          />
+
           <p className="text-2xl lg:text-3xl mb-6 px-4 text-[#0F172A]">
             Drag and drop or upload a file
           </p>
-          
+
           <p className="text-lg lg:text-xl text-[#64748B] mb-12 px-4">
             Upload a photo, PDF, or handwritten equation
           </p>

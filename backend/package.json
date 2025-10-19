@@ -1,21 +1,22 @@
 {
-  "name": "accessible-stem-backend",
+  "name": "codered-backend",
   "version": "1.0.0",
   "type": "module",
-  "description": "Backend for Mathpix → Gemini → Voice Pipeline",
+  "description": "Backend for accessible STEM notes with Mathpix → Gemini → Voice Pipeline",
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
     "test": "echo \"No tests yet\" && exit 0"
   },
-  "keywords": ["mathpix", "gemini", "accessibility", "ocr"],
-  "author": "Your Team",
+  "keywords": ["mathpix", "gemini", "accessibility", "ocr", "stem"],
+  "author": "CodeRed Astra Team",
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
+    "@supabase/supabase-js": "^2.39.0",
     "axios": "^1.6.2",
     "multer": "^1.4.5-lts.1",
     "form-data": "^4.0.0",
