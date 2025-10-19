@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
-import { ScrollArea } from "./ui/scroll-area";
 import {
   Send,
   FileText,
@@ -57,9 +56,12 @@ export function Workspace({
   const [isListening, setIsListening] = useState(false);
   const [quizMode, setQuizMode] = useState(false);
   const [currentQuizQuestions, setCurrentQuizQuestions] = useState<string[]>([]);
+  const [quizAnswers, setQuizAnswers] = useState<string[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const recognitionRef = useRef<any>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastSpokenMessageId = useRef<string>("");
 
   // Initialize speech recognition
   useEffect(() => {
@@ -108,12 +110,23 @@ export function Workspace({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isListening]);
 
-  // Auto-speak new assistant messages
+  // Auto-speak new assistant messages - FIXED to prevent double speaking
   useEffect(() => {
     const lastMessage = chatMessages[chatMessages.length - 1];
-    if (lastMessage?.role === 'assistant' && lastMessage.shouldSpeak && !currentAudio) {
+    if (
+      lastMessage?.role === 'assistant' && 
+      lastMessage.shouldSpeak && 
+      !currentAudio &&
+      lastMessage.id !== lastSpokenMessageId.current
+    ) {
+      lastSpokenMessageId.current = lastMessage.id;
       speakText(lastMessage.content);
     }
+  }, [chatMessages, currentAudio]);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
   const toggleVoiceInput = () => {
@@ -157,8 +170,8 @@ export function Workspace({
     }
   };
 
-  // Text-to-Speech function
-  const speakText = async (text: string) => {
+  // Text-to-Speech function - FIXED to not auto-advance quiz
+  const speakText = async (text: string, autoAdvanceQuiz: boolean = false) => {
     try {
       // Stop current audio if playing
       if (currentAudio) {
@@ -175,7 +188,9 @@ export function Workspace({
       });
 
       if (!response.ok) {
-        throw new Error('TTS failed');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('TTS failed:', errorData);
+        return;
       }
 
       const audioBlob = await response.blob();
@@ -188,13 +203,6 @@ export function Workspace({
       audio.onended = () => {
         URL.revokeObjectURL(audioUrl);
         setCurrentAudio(null);
-        
-        // If in quiz mode, move to next question
-        if (quizMode && currentQuestionIndex < currentQuizQuestions.length - 1) {
-          setTimeout(() => {
-            askNextQuestion();
-          }, 1000);
-        }
       };
     } catch (error) {
       console.error('TTS Error:', error);
@@ -271,22 +279,22 @@ export function Workspace({
     setChatMessages((prev) => [...prev, aiMessage]);
   };
 
-  // Quiz handling - parse and ask one at a time
+  // Quiz handling - FIXED
   const handleQuiz = async () => {
     setIsLoading(true);
     const data = await callAIBackend('quiz');
     
-    if (data.quiz) {
-      // Parse questions from response
-      const questions = data.quiz.split(/Question \d+:/g).filter((q: string) => q.trim());
+    if (data.questions && Array.isArray(data.questions)) {
+      const questions = data.questions;
       
       if (questions.length > 0) {
         setQuizMode(true);
         setCurrentQuizQuestions(questions);
+        setQuizAnswers([]);
         setCurrentQuestionIndex(0);
         
         // Ask first question
-        const firstQuestion = `Question 1: ${questions[0].trim()}`;
+        const firstQuestion = `Question 1: ${questions[0]}`;
         const message: ChatMessage = {
           id: Date.now().toString(),
           role: "assistant",
@@ -297,7 +305,18 @@ export function Workspace({
         
         setChatMessages((prev) => [...prev, message]);
       }
+    } else {
+      const errorMessage: ChatMessage = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: "Sorry, I couldn't generate quiz questions. Please try again.",
+        timestamp: new Date().toISOString(),
+        shouldSpeak: true,
+      };
+      setChatMessages((prev) => [...prev, errorMessage]);
     }
+    
+    setIsLoading(false);
   };
 
   const askNextQuestion = () => {
@@ -305,7 +324,7 @@ export function Workspace({
     if (nextIndex < currentQuizQuestions.length) {
       setCurrentQuestionIndex(nextIndex);
       
-      const nextQuestion = `Question ${nextIndex + 1}: ${currentQuizQuestions[nextIndex].trim()}`;
+      const nextQuestion = `Question ${nextIndex + 1}: ${currentQuizQuestions[nextIndex]}`;
       const message: ChatMessage = {
         id: Date.now().toString(),
         role: "assistant",
@@ -316,16 +335,8 @@ export function Workspace({
       
       setChatMessages((prev) => [...prev, message]);
     } else {
-      // Quiz finished
-      setQuizMode(false);
-      const finishMessage: ChatMessage = {
-        id: Date.now().toString(),
-        role: "assistant",
-        content: "Great job completing the quiz! Would you like me to explain any of the concepts further?",
-        timestamp: new Date().toISOString(),
-        shouldSpeak: true,
-      };
-      setChatMessages((prev) => [...prev, finishMessage]);
+      // Quiz finished - evaluate answers
+      evaluateQuizAnswers();
     }
   };
 
@@ -340,15 +351,70 @@ export function Workspace({
     setChatMessages((prev) => [...prev, userMessage]);
     setInputMessage("");
 
-    // Simple feedback
-    const feedback: ChatMessage = {
-      id: (Date.now() + 1).toString(),
-      role: "assistant",
-      content: "Got it! Let me move to the next question.",
-      timestamp: new Date().toISOString(),
-      shouldSpeak: true,
-    };
-    setChatMessages((prev) => [...prev, feedback]);
+    // Store answer
+    const newAnswers = [...quizAnswers, answer];
+    setQuizAnswers(newAnswers);
+
+    // Check if this was the last question
+    if (currentQuestionIndex >= currentQuizQuestions.length - 1) {
+      // Last question - evaluate all answers
+      const finalAnswers = [...newAnswers];
+      setQuizMode(false);
+      
+      // Call evaluation endpoint
+      try {
+        const response = await fetch('http://localhost:3000/api/ai/evaluate-quiz', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            quiz_questions: currentQuizQuestions,
+            user_answers: finalAnswers,
+            original_content: extractedContent,
+          }),
+        });
+
+        const data = await response.json();
+        
+        const evaluationMessage: ChatMessage = {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: data.evaluation || "Great job completing the quiz!",
+          timestamp: new Date().toISOString(),
+          shouldSpeak: true,
+        };
+        setChatMessages((prev) => [...prev, evaluationMessage]);
+      } catch (error) {
+        const errorMessage: ChatMessage = {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: "Quiz completed! Great job answering all the questions.",
+          timestamp: new Date().toISOString(),
+          shouldSpeak: true,
+        };
+        setChatMessages((prev) => [...prev, errorMessage]);
+      }
+    } else {
+      // Not the last question - move to next
+      const feedback: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "Got it! Let me ask the next question.",
+        timestamp: new Date().toISOString(),
+        shouldSpeak: true,
+      };
+      setChatMessages((prev) => [...prev, feedback]);
+      
+      // Wait a moment, then ask next question
+      setTimeout(() => {
+        askNextQuestion();
+      }, 1500);
+    }
+  };
+
+  const evaluateQuizAnswers = async () => {
+    // This function is now handled in handleQuizAnswer for the last question
   };
 
   const handleSummary = async () => {
@@ -425,7 +491,7 @@ export function Workspace({
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <ScrollArea className="h-[500px] p-6">
+            <div className="h-[500px] overflow-y-auto p-6">
               <div className="prose prose-sm max-w-none">
                 <h3 className="text-lg font-semibold mb-4 text-gray-900">
                   Extracted Content
@@ -449,7 +515,7 @@ export function Workspace({
                   {currentAudio ? 'Playing...' : 'Read Content Aloud (with Math)'}
                 </Button>
               </div>
-            </ScrollArea>
+            </div>
           </CardContent>
         </Card>
 
@@ -459,12 +525,16 @@ export function Workspace({
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-purple-600" />
               AI Assistant
-              {quizMode && <span className="text-sm font-normal text-purple-600">(Quiz Mode)</span>}
+              {quizMode && (
+                <span className="text-sm font-normal text-purple-600">
+                  (Quiz Mode - Question {currentQuestionIndex + 1}/{currentQuizQuestions.length})
+                </span>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col p-0 min-h-[500px]">
-            {/* Chat messages */}
-            <ScrollArea className="flex-1 p-4">
+            {/* Chat messages - SIMPLE SCROLLING DIV */}
+            <div className="flex-1 overflow-y-auto p-4">
               <div className="space-y-4">
                 {chatMessages.map((message) => (
                   <div
@@ -495,8 +565,9 @@ export function Workspace({
                         </p>
                         {message.role === "assistant" && (
                           <button
-                            onClick={() => speakText(message.content)}
+                            onClick={() => speakText(message.content, false)}
                             className="ml-2 text-xs flex items-center gap-1 hover:underline"
+                            disabled={!!currentAudio}
                           >
                             <Volume2 className="w-3 h-3" />
                             Listen
@@ -514,8 +585,11 @@ export function Workspace({
                     </div>
                   </div>
                 )}
+                
+                {/* Invisible div for auto-scroll target */}
+                <div ref={messagesEndRef} />
               </div>
-            </ScrollArea>
+            </div>
 
             {/* Quick prompts */}
             <div className="px-4 py-3 border-t bg-gray-50">
@@ -535,7 +609,7 @@ export function Workspace({
                   onClick={handleQuiz}
                   disabled={isLoading || quizMode}
                 >
-                  ✍️ Quiz (One at a Time)
+                  ✍️ Quiz Me
                 </Button>
                 <Button
                   variant="outline"
@@ -563,7 +637,7 @@ export function Workspace({
                   ref={textareaRef}
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
-                  placeholder={quizMode ? "Your answer..." : "Ask about this file..."}
+                  placeholder={quizMode ? "Type or speak your answer..." : "Ask about this file..."}
                   className="resize-none"
                   rows={2}
                   disabled={isLoading}
@@ -580,6 +654,7 @@ export function Workspace({
                     variant={isListening ? "destructive" : "outline"}
                     className="self-end"
                     title="Press Alt to speak"
+                    disabled={isLoading}
                   >
                     {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                   </Button>

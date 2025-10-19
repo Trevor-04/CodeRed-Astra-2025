@@ -4,7 +4,7 @@ from pydantic import BaseModel
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
-from typing import Optional
+from typing import Optional, List
 
 load_dotenv()
 
@@ -28,9 +28,14 @@ class ExtractedTextRequest(BaseModel):
     text: str
 
 class UserChoiceRequest(BaseModel):
-    option: int  # 1, 2, 3, or 4
+    option: int
     text: str
     custom_input: Optional[str] = None
+
+class QuizAnswersRequest(BaseModel):
+    quiz_questions: List[str]
+    user_answers: List[str]
+    original_content: str
 
 @app.get("/")
 async def root():
@@ -58,12 +63,8 @@ async def list_models():
 
 @app.post("/present-options")
 async def present_options(request: ExtractedTextRequest):
-    """
-    Takes extracted text from Mathpix and asks Gemini to present 4 options
-    """
+    """Takes extracted text from Mathpix and asks Gemini to present 4 options"""
     try:
-        print(f"Received text: {request.text[:100]}...")  # Debug log
-        
         prompt = f"""You have just received mathematical or scientific content from a student's notes:
 
 {request.text}
@@ -81,9 +82,7 @@ Please say the number of your choice: 1, 2, 3, or 4."
 
 Keep it conversational and encouraging."""
 
-        print("Calling Gemini API...")  # Debug log
         response = model.generate_content(prompt)
-        print("Gemini response received!")  # Debug log
         
         return {
             "success": True,
@@ -96,32 +95,24 @@ Keep it conversational and encouraging."""
             ]
         }
     except Exception as e:
-        print(f"ERROR in present_options: {str(e)}")  # Debug log
-        print(f"Error type: {type(e).__name__}")  # Debug log
-        import traceback
-        traceback.print_exc()  # Full error trace
-        raise HTTPException(status_code=500, detail=f"Gemini API Error: {str(e)}")
+        print(f"ERROR in present_options: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/handle-user-choice")
 async def handle_user_choice(request: UserChoiceRequest):
-    """
-    Handles the user's choice (1, 2, 3, or 4) and processes accordingly
-    """
+    """Handles the user's choice (1, 2, 3, or 4) and processes accordingly"""
     try:
         if request.option == 1:
-            # Option 1: Explain concepts
             result = await explain_concepts(request.text)
         elif request.option == 2:
-            # Option 2: Quiz the user
             result = await create_quiz(request.text)
         elif request.option == 3:
-            # Option 3: Read aloud (return the text for TTS)
             result = {
                 "type": "read_aloud",
                 "content": request.text,
                 "text_to_speak": f"Here is your content: {request.text}"
             }
         elif request.option == 4:
-            # Option 4: Custom request
             if not request.custom_input:
                 result = {
                     "type": "prompt",
@@ -138,6 +129,7 @@ async def handle_user_choice(request: UserChoiceRequest):
             "text_to_speak": result.get("text_to_speak", "")
         }
     except Exception as e:
+        print(f"ERROR in handle_user_choice: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 async def explain_concepts(text: str):
@@ -160,38 +152,85 @@ Format your response to be spoken aloud, so use a conversational tone."""
     }
 
 async def create_quiz(text: str):
-    """Option 2: Create a quiz"""
-    prompt = f"""Based on this math/science content:
+    """Option 2: Create a quiz - Returns structured questions"""
+    prompt = f"""Based on this STEM content:
 
 {text}
 
-Create a short quiz with 3 questions. For each question:
-1. State the question clearly
-2. Give the student time to think
-3. After each question, say "Please say your answer when ready"
+Create exactly 3 quiz questions. For each question:
+- Make it clear and specific
+- Focus on understanding, not just memorization
+- Make sure it can be answered based on the content
 
-Format this to be spoken aloud in a quiz format. Be encouraging.
+Format each question on a separate line like this:
+Q1: [question text]
+Q2: [question text]
+Q3: [question text]
 
-Example format:
-"Let's test your understanding with a quick quiz!
-
-Question 1: [question text]
-Please say your answer when ready.
-
-Question 2: [question text]
-Please say your answer when ready.
-
-Question 3: [question text]
-Please say your answer when ready."
-"""
+Do NOT include answers or explanations yet - just the questions."""
 
     response = model.generate_content(prompt)
     
+    # Parse questions into a list
+    questions_text = response.text
+    questions = []
+    for line in questions_text.split('\n'):
+        if line.strip().startswith('Q'):
+            # Remove "Q1:", "Q2:", etc.
+            question = line.split(':', 1)[1].strip() if ':' in line else line.strip()
+            questions.append(question)
+    
     return {
         "type": "quiz",
-        "content": response.text,
-        "text_to_speak": response.text
+        "questions": questions,
+        "questions_text": questions_text,
+        "text_to_speak": "Great! I've prepared a quiz for you. I'll ask you one question at a time."
     }
+
+@app.post("/evaluate-quiz-answers")
+async def evaluate_quiz_answers(request: QuizAnswersRequest):
+    """Evaluate user's quiz answers at the end"""
+    try:
+        # Build evaluation prompt
+        qa_pairs = []
+        for i, (question, answer) in enumerate(zip(request.quiz_questions, request.user_answers), 1):
+            qa_pairs.append(f"Question {i}: {question}\nStudent's Answer: {answer}")
+        
+        qa_text = "\n\n".join(qa_pairs)
+        
+        prompt = f"""You are evaluating a student's quiz answers based on this original content:
+
+{request.original_content}
+
+Here are the questions and the student's answers:
+
+{qa_text}
+
+For each question:
+1. Determine if the answer is CORRECT, PARTIALLY CORRECT, or INCORRECT
+2. Provide brief feedback (1-2 sentences)
+3. If incorrect, give the correct answer
+
+Format your response like this:
+Question 1: [CORRECT/PARTIALLY CORRECT/INCORRECT]
+Feedback: [your feedback]
+Correct answer: [only if wrong]
+
+Question 2: [status]
+...
+
+Be encouraging and constructive, even when answers are wrong."""
+
+        response = model.generate_content(prompt)
+        
+        return {
+            "success": True,
+            "evaluation": response.text,
+            "text_to_speak": response.text
+        }
+    except Exception as e:
+        print(f"ERROR in evaluate_quiz_answers: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 async def handle_custom_request(text: str, custom_input: str):
     """Option 4: Handle custom user request"""
@@ -214,11 +253,8 @@ Format your response to be spoken aloud."""
 
 @app.post("/process-voice-input")
 async def process_voice_input(request: ExtractedTextRequest):
-    """
-    For Option 4: Process the user's voice input and determine what they want
-    """
+    """For Option 4: Process the user's voice input"""
     try:
-        # This interprets what the user said for option 4
         prompt = f"""The user said: "{request.text}"
 
 This is their custom request about their math notes. Interpret what they want and respond appropriately.

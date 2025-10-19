@@ -133,7 +133,28 @@ app.post('/api/ai/quiz', async (req, res) => {
 
     res.json({
       success: true,
-      quiz: response.data.result.content || response.data.result.text_to_speak,
+      questions: response.data.result.questions || [],
+      message: response.data.result.text_to_speak,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Evaluate quiz answers at the end
+app.post('/api/ai/evaluate-quiz', async (req, res) => {
+  try {
+    const { quiz_questions, user_answers, original_content } = req.body;
+    
+    const response = await axios.post('http://localhost:8000/evaluate-quiz-answers', {
+      quiz_questions,
+      user_answers,
+      original_content,
+    });
+
+    res.json({
+      success: true,
+      evaluation: response.data.evaluation,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
