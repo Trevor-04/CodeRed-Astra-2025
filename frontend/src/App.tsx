@@ -4,6 +4,7 @@ import { Header } from "./components/Header";
 import { AccessibilityBar } from "./components/AccessibilityBar";
 import { Dashboard } from "./components/Dashboard";
 import { UploadPage } from "./components/UploadPage";
+import { TestRecordingsPage } from "./components/TestRecordingsPage";
 import { ProcessingScreen } from "./components/ProcessingScreen";
 import { AudioPlayer } from "./components/AudioPlayer";
 import { SettingsPage } from "./components/SettingsPage";
@@ -488,6 +489,11 @@ Let u = x² + 1, then du = 2x dx
                 onBack={() => navigate("/")}
               />
             } 
+          />
+
+          <Route 
+            path="/test-recordings" 
+            element={<TestRecordingsPage />} 
           />
         </Routes>
       </div>

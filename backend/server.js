@@ -47,6 +47,69 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+// Create demo user endpoint
+app.post("/api/create-demo-user", async (req, res) => {
+  try {
+    const demoUserId = '123e4567-e89b-12d3-a456-426614174000';
+    
+    if (supabase) {
+      // Check if user already exists
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', demoUserId)
+        .single();
+
+      if (existingUser) {
+        return res.json({
+          success: true,
+          message: "Demo user already exists",
+          userId: demoUserId
+        });
+      }
+
+      // Create demo user
+      const { data, error } = await supabase
+        .from('users')
+        .insert({
+          id: demoUserId,
+          email: 'demo@example.com',
+          password: 'demo123', // Required field for users table
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating demo user:', error);
+        return res.status(500).json({
+          error: "Failed to create demo user",
+          details: error.message
+        });
+      }
+
+      res.json({
+        success: true,
+        message: "Demo user created successfully",
+        userId: demoUserId,
+        data: data
+      });
+    } else {
+      res.json({
+        success: true,
+        message: "Demo user created (mock mode)",
+        userId: demoUserId
+      });
+    }
+  } catch (error) {
+    console.error('Error in create-demo-user:', error);
+    res.status(500).json({
+      error: "Internal server error",
+      message: error.message
+    });
+  }
+});
+
 // Root route
 app.get("/", (req, res) => {
   res.json({
@@ -56,6 +119,7 @@ app.get("/", (req, res) => {
       health: "/api/health",
       transcripts: "/api/transcripts",
       upload: "/api/upload",
+      "create-demo-user": "/api/create-demo-user",
     },
   });
 });
@@ -312,6 +376,133 @@ app.post("/api/upload", upload.single('file'), async (req, res) => {
     console.error('Error uploading file:', error);
     res.status(500).json({
       error: "Failed to upload file",
+      message: error.message
+    });
+  }
+});
+
+// Get uploads with pagination
+app.get("/api/uploads", async (req, res) => {
+  try {
+    const { userId = 'anonymous', type, page = 1, limit = 5 } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+
+    if (supabase) {
+      let query = supabase
+        .from('uploads')
+        .select('*', { count: 'exact' })
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + parseInt(limit) - 1);
+
+      if (type) {
+        query = query.eq('type', type);
+      }
+
+      const { data, error, count } = await query;
+
+      if (error) {
+        console.error('Supabase error:', error);
+        return res.status(500).json({
+          error: "Failed to fetch uploads",
+          details: error.message
+        });
+      }
+
+      const totalPages = Math.ceil((count || 0) / parseInt(limit));
+
+      res.json({
+        uploads: data || [],
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages,
+          totalCount: count || 0,
+          hasNext: parseInt(page) < totalPages,
+          hasPrevious: parseInt(page) > 1
+        }
+      });
+    } else {
+      // Mock data when Supabase is not configured
+      res.json({
+        uploads: [],
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalCount: 0,
+          hasNext: false,
+          hasPrevious: false
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching uploads:', error);
+    res.status(500).json({
+      error: "Internal server error",
+      message: error.message
+    });
+  }
+});
+
+// Save upload record
+app.post("/api/save-upload", async (req, res) => {
+  try {
+    const { id, userId, type, filePath, originalName, parsedText } = req.body;
+
+    if (!id || !userId || !type || !filePath || !originalName) {
+      return res.status(400).json({
+        error: "Missing required fields: id, userId, type, filePath, originalName"
+      });
+    }
+
+    if (supabase) {
+      const uploadData = {
+        id,
+        user_id: userId,
+        type,
+        file_path: filePath,
+        original_name: originalName,
+        parsed_text: parsedText || null,
+        created_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('uploads')
+        .insert(uploadData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Supabase error:', error);
+        return res.status(500).json({
+          error: "Failed to save upload",
+          details: error.message
+        });
+      }
+
+      res.json({
+        success: true,
+        upload: data
+      });
+    } else {
+      // Mock response when Supabase is not configured
+      res.json({
+        success: true,
+        upload: {
+          id,
+          user_id: userId,
+          type,
+          file_path: filePath,
+          original_name: originalName,
+          parsed_text: parsedText || null,
+          created_at: new Date().toISOString()
+        },
+        message: "Upload saved successfully (mock mode - Supabase not configured)"
+      });
+    }
+  } catch (error) {
+    console.error('Error saving upload:', error);
+    res.status(500).json({
+      error: "Internal server error",
       message: error.message
     });
   }

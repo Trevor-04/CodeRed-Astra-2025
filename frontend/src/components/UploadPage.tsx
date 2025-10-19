@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Workspace } from "./Workspace";
 import { UploadArea } from "./uploadArea";
 import { RecordingProcessor } from "./RecordingProcessor";
+import { RecentRecordings } from "./RecentRecordings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { type Upload as DBUpload } from "../services/uploadService";
 
 import {
   Card,
@@ -28,6 +30,17 @@ interface UploadPageProps {
   mockUploads: Upload[];
   mockExtractedContent: Record<string, string>;
 }
+
+// Helper function to convert DB upload to component upload format
+const convertDBUploadToUpload = (dbUpload: DBUpload): Upload & { parsed_text?: string } => ({
+  id: dbUpload.id,
+  userId: dbUpload.user_id,
+  type: dbUpload.type,
+  filePath: dbUpload.file_path,
+  originalName: dbUpload.original_name,
+  createdAt: dbUpload.created_at,
+  parsed_text: dbUpload.parsed_text, // Include the transcribed text
+});
 
 export function UploadPage({
   onBack,
@@ -177,46 +190,13 @@ export function UploadPage({
                   <h3 className="text-lg font-semibold mb-4">
                     Recent Recordings
                   </h3>
-                  <div className="space-y-3">
-                    {mockUploads
-                      .filter(
-                        (upload) =>
-                          upload.type === "video" || upload.type === "audio"
-                      )
-                      .map((upload) => (
-                        <div
-                          key={upload.id}
-                          onClick={() => setSelectedWorkspace(upload)}
-                          className="flex items-center justify-between p-4 bg-purple-50 rounded-lg border border-purple-200 hover:bg-purple-100 cursor-pointer transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="text-2xl">
-                              {upload.type === "video" ? "🎥" : "🔊"}
-                            </span>
-                            <div>
-                              <p className="font-semibold text-gray-900">
-                                {upload.originalName}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                Uploaded{" "}
-                                {new Date(upload.createdAt).toLocaleString(
-                                  "en-US",
-                                  {
-                                    month: "short",
-                                    day: "numeric",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  }
-                                )}
-                              </p>
-                            </div>
-                          </div>
-                          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                            Transcribed
-                          </span>
-                        </div>
-                      ))}
-                  </div>
+                  <RecentRecordings 
+                    onSelectRecording={(recording) => {
+                      // Convert DBUpload to Upload format
+                      setSelectedWorkspace(convertDBUploadToUpload(recording));
+                    }}
+                    userId="123e4567-e89b-12d3-a456-426614174000" // Use the same UUID as for saving uploads
+                  />
                 </div>
               )}
 
@@ -228,7 +208,10 @@ export function UploadPage({
                     <Workspace
                       upload={selectedWorkspace}
                       extractedContent={
-                        mockExtractedContent[selectedWorkspace.id]
+                        // Use the parsed_text from the database recording, fallback to mock data
+                        (selectedWorkspace as any).parsed_text || 
+                        mockExtractedContent[selectedWorkspace.id] ||
+                        "No transcription available for this recording."
                       }
                       onClose={() => setSelectedWorkspace(null)}
                     />

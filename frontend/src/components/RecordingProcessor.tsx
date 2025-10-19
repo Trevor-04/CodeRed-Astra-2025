@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { AudioProcessingService } from '../services/audioProcessingService';
 import { SpeechToTextService } from '../services/speechToTextService';
+import { UploadService } from '../services/uploadService';
 import type { AudioExtractionProgress } from '../services/audioProcessingService';
 import type { TranscriptionProgress, TranscriptionResult } from '../services/speechToTextService';
 
@@ -153,6 +154,22 @@ export function RecordingProcessor({
         progress: 100,
         message: 'Transcription completed successfully!'
       });
+
+      // Save the upload to the database
+      try {
+        await UploadService.saveUpload({
+          id: crypto.randomUUID(),
+          userId: '123e4567-e89b-12d3-a456-426614174000', // Consistent demo user UUID
+          type: selectedFile.type.startsWith('video/') ? 'video' : 'audio',
+          filePath: selectedFile.name, // In a real app, this would be the actual file path in storage
+          originalName: selectedFile.name,
+          parsedText: result.text,
+        });
+        console.log('Upload saved to database successfully');
+      } catch (saveError) {
+        console.error('Failed to save upload to database:', saveError);
+        // Don't show error to user since transcription succeeded
+      }
 
       onTranscriptionComplete?.(result);
 

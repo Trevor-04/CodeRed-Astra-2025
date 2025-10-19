@@ -68,7 +68,7 @@ export function Workspace({
 
       if (inputMessage.toLowerCase().includes("summary")) {
         aiResponse =
-          "Here's a summary: " + extractedContent.substring(0, 200) + "...";
+          "Here's a summary: " + (extractedContent || "No content available").substring(0, 200) + "...";
       } else if (inputMessage.toLowerCase().includes("quiz")) {
         aiResponse =
           "Here are 3 quiz questions based on the content:\n\n1. What is the main topic discussed?\n2. Can you explain the key concept?\n3. How would you apply this in practice?";
@@ -127,7 +127,7 @@ export function Workspace({
                 <h3 className="text-lg font-semibold mb-4 text-gray-900">
                   Extracted Content
                 </h3>
-                {extractedContent.split("\n\n").map((paragraph, index) => (
+                {(extractedContent || "").split("\n\n").map((paragraph, index) => (
                   <p key={index} className="mb-4 text-gray-700 leading-relaxed">
                     {paragraph}
                   </p>

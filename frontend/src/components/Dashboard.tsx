@@ -49,6 +49,27 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           </p>
         </CardContent>
       </Card>
+
+      {/* Development/Test Section */}
+      <Card className="bg-yellow-50 border-yellow-200 shadow-md rounded-lg mt-6">
+        <CardHeader className="p-6">
+          <CardTitle className="flex items-center gap-3 text-xl text-yellow-800">
+            🧪 Development Testing
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 pt-0">
+          <p className="text-yellow-700 mb-4">
+            Test the new Recent Recordings feature with database integration and pagination.
+          </p>
+          <Button
+            onClick={() => onNavigate('test-recordings')}
+            variant="outline"
+            className="cursor-pointer border-yellow-300 text-yellow-800 hover:bg-yellow-100"
+          >
+            Test Recent Recordings
+          </Button>
+        </CardContent>
+      </Card>
     </main>
   );
 }

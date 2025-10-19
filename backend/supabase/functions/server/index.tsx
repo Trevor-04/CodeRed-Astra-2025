@@ -312,6 +312,97 @@ app.delete('/make-server-b67fdaad/lessons/:id', async (c) => {
   }
 });
 
+// Get uploads endpoint with pagination
+app.get('/make-server-b67fdaad/uploads', async (c) => {
+  try {
+    const userId = c.req.query('userId') || 'anonymous';
+    const type = c.req.query('type'); // Filter by type (video, audio, PDF, math_image)
+    const page = parseInt(c.req.query('page') || '1');
+    const limit = parseInt(c.req.query('limit') || '5');
+    const offset = (page - 1) * limit;
+
+    let query = supabase
+      .from('uploads')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (type) {
+      query = query.eq('type', type);
+    }
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      console.error('Error fetching uploads:', error);
+      return c.json({ error: `Database error: ${error.message}` }, 500);
+    }
+
+    const totalPages = Math.ceil((count || 0) / limit);
+
+    return c.json({
+      uploads: data || [],
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount: count || 0,
+        hasNext: page < totalPages,
+        hasPrevious: page > 1
+      }
+    });
+
+  } catch (error) {
+    console.error('Error in uploads endpoint:', error);
+    return c.json({ error: `Error fetching uploads: ${error}` }, 500);
+  }
+});
+
+// Save upload record to database
+app.post('/make-server-b67fdaad/save-upload', async (c) => {
+  try {
+    const { 
+      id, 
+      userId, 
+      type, 
+      filePath, 
+      originalName, 
+      parsedText 
+    } = await c.req.json();
+
+    if (!id || !userId || !type || !filePath || !originalName) {
+      return c.json({ error: 'Missing required fields' }, 400);
+    }
+
+    const uploadData = {
+      id,
+      user_id: userId,
+      type,
+      file_path: filePath,
+      original_name: originalName,
+      parsed_text: parsedText || null,
+      created_at: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from('uploads')
+      .insert(uploadData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error saving upload:', error);
+      return c.json({ error: `Database error: ${error.message}` }, 500);
+    }
+
+    return c.json({ success: true, upload: data });
+
+  } catch (error) {
+    console.error('Error in save-upload endpoint:', error);
+    return c.json({ error: `Error saving upload: ${error}` }, 500);
+  }
+});
+
 // Health check
 app.get('/make-server-b67fdaad/health', (c) => {
   return c.json({ status: 'healthy', service: 'STEMVoice API' });
