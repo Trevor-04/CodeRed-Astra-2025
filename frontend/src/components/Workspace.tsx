@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
+import { AnimatedBackground } from "./AnimatedBackground";
 import {
   Send,
   FileText,
@@ -11,7 +12,10 @@ import {
   Volume2,
   Mic,
   MicOff,
+  Zap,
 } from "lucide-react";
+
+// ... keep all your interfaces the same ...
 
 interface Upload {
   id: string;
@@ -41,6 +45,7 @@ export function Workspace({
   extractedContent,
   onClose,
 }: WorkspaceProps) {
+  // ... keep all your existing state ...
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       id: "1",
@@ -62,7 +67,12 @@ export function Workspace({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastSpokenMessageId = useRef<string>("");
+  
+  // NEW: 3D Background toggle
+  const [show3DBackground, setShow3DBackground] = useState(false);
 
+  // ... keep ALL your existing useEffects and functions exactly as they are ...
+  
   // Initialize speech recognition
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -91,15 +101,12 @@ export function Workspace({
     }
   }, []);
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Alt key - Start voice input
       if (e.altKey && !e.ctrlKey && !e.shiftKey) {
         e.preventDefault();
         toggleVoiceInput();
       }
-      // Ctrl key - Focus on text input
       else if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key === 'Control') {
         e.preventDefault();
         textareaRef.current?.focus();
@@ -110,7 +117,6 @@ export function Workspace({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isListening]);
 
-  // Auto-speak new assistant messages - FIXED to prevent double speaking
   useEffect(() => {
     const lastMessage = chatMessages[chatMessages.length - 1];
     if (
@@ -124,7 +130,6 @@ export function Workspace({
     }
   }, [chatMessages, currentAudio]);
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
@@ -144,7 +149,6 @@ export function Workspace({
     }
   };
 
-  // Call backend AI endpoints
   const callAIBackend = async (endpoint: string) => {
     setIsLoading(true);
     try {
@@ -170,10 +174,8 @@ export function Workspace({
     }
   };
 
-  // Text-to-Speech function - FIXED to not auto-advance quiz
   const speakText = async (text: string, autoAdvanceQuiz: boolean = false) => {
     try {
-      // Stop current audio if playing
       if (currentAudio) {
         currentAudio.pause();
         setCurrentAudio(null);
@@ -209,7 +211,6 @@ export function Workspace({
     }
   };
 
-  // Convert LaTeX to readable text
   const latexToReadable = (text: string): string => {
     return text
       .replace(/\$/g, '')
@@ -232,13 +233,11 @@ export function Workspace({
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
 
-    // If in quiz mode, treat as answer
     if (quizMode) {
       handleQuizAnswer(inputMessage);
       return;
     }
 
-    // Add user message
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: "user",
@@ -250,7 +249,6 @@ export function Workspace({
     const currentInput = inputMessage;
     setInputMessage("");
 
-    // Determine which AI endpoint to call
     let endpoint = "explain";
     if (currentInput.toLowerCase().includes("summary") || currentInput.toLowerCase().includes("summarize")) {
       endpoint = "summary";
@@ -258,7 +256,6 @@ export function Workspace({
       endpoint = "quiz";
     }
 
-    // Call backend
     const data = await callAIBackend(endpoint);
     
     let aiResponse = "";
@@ -279,7 +276,6 @@ export function Workspace({
     setChatMessages((prev) => [...prev, aiMessage]);
   };
 
-  // Quiz handling - FIXED
   const handleQuiz = async () => {
     setIsLoading(true);
     const data = await callAIBackend('quiz');
@@ -293,7 +289,6 @@ export function Workspace({
         setQuizAnswers([]);
         setCurrentQuestionIndex(0);
         
-        // Ask first question
         const firstQuestion = `Question 1: ${questions[0]}`;
         const message: ChatMessage = {
           id: Date.now().toString(),
@@ -335,13 +330,11 @@ export function Workspace({
       
       setChatMessages((prev) => [...prev, message]);
     } else {
-      // Quiz finished - evaluate answers
       evaluateQuizAnswers();
     }
   };
 
   const handleQuizAnswer = async (answer: string) => {
-    // Add user's answer
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: "user",
@@ -351,17 +344,13 @@ export function Workspace({
     setChatMessages((prev) => [...prev, userMessage]);
     setInputMessage("");
 
-    // Store answer
     const newAnswers = [...quizAnswers, answer];
     setQuizAnswers(newAnswers);
 
-    // Check if this was the last question
     if (currentQuestionIndex >= currentQuizQuestions.length - 1) {
-      // Last question - evaluate all answers
       const finalAnswers = [...newAnswers];
       setQuizMode(false);
       
-      // Call evaluation endpoint
       try {
         const response = await fetch('http://localhost:3000/api/ai/evaluate-quiz', {
           method: 'POST',
@@ -396,7 +385,6 @@ export function Workspace({
         setChatMessages((prev) => [...prev, errorMessage]);
       }
     } else {
-      // Not the last question - move to next
       const feedback: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
@@ -406,7 +394,6 @@ export function Workspace({
       };
       setChatMessages((prev) => [...prev, feedback]);
       
-      // Wait a moment, then ask next question
       setTimeout(() => {
         askNextQuestion();
       }, 1500);
@@ -414,7 +401,7 @@ export function Workspace({
   };
 
   const evaluateQuizAnswers = async () => {
-    // This function is now handled in handleQuizAnswer for the last question
+    // Handled in handleQuizAnswer
   };
 
   const handleSummary = async () => {
@@ -461,215 +448,235 @@ export function Workspace({
   };
 
   return (
-    <div className="space-y-4">
-      {/* Back Button */}
-      <Button variant="outline" onClick={onClose} className="gap-2">
-        ← Back to Uploads
-      </Button>
+    <div className={`space-y-4 relative ${show3DBackground ? "mode-3d" : ""}`}>
+      {/* NEW: 3D Animated Background */}
+      {show3DBackground && <AnimatedBackground />}
 
-      {/* Keyboard Shortcuts Info */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
-        <strong>Keyboard Shortcuts:</strong> Press <kbd className="px-2 py-1 bg-white border rounded">Alt</kbd> to speak your answer, 
-        or <kbd className="px-2 py-1 bg-white border rounded">Ctrl</kbd> to type
-      </div>
+      {/* All content with z-index to stay above background */}
+      <div className="relative z-10">
+        {/* Back Button */}
+        <div className="flex items-center justify-between">
+          <Button variant="outline" onClick={onClose} className="gap-2">
+            ← Back to Uploads
+          </Button>
+          
+          {/* NEW: 3D Background Toggle */}
+          <Button
+            variant={show3DBackground ? "default" : "outline"}
+            onClick={() => setShow3DBackground(!show3DBackground)}
+            className={`gap-2 ${show3DBackground ? "!bg-cyan-600 !text-white hover:!bg-cyan-700" : ""}`}
+          >
+            <Zap className="w-4 h-4" />
+            {show3DBackground ? '3D Mode ON' : '3D Mode OFF'}
+          </Button>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left side - File Content */}
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle className="flex items-center gap-2">
-              {getFileIcon()}
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold truncate">
-                  {upload.originalName}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left side - File Content */}
+          <Card className={show3DBackground ? "bg-black/80 backdrop-blur-sm border-cyan-500/30" : ""}>
+            <CardHeader className="border-b">
+              <CardTitle className={`flex items-center gap-2 ${show3DBackground ? "text-cyan-100" : ""}`}>
+                {getFileIcon()}
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold truncate">
+                    {upload.originalName}
+                  </div>
+                  <div className="text-sm text-gray-500 font-normal">
+                    {upload.type} • Uploaded{" "}
+                    {new Date(upload.createdAt).toLocaleDateString()}
+                  </div>
                 </div>
-                <div className="text-sm text-gray-500 font-normal">
-                  {upload.type} • Uploaded{" "}
-                  {new Date(upload.createdAt).toLocaleDateString()}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className={`h-[500px] overflow-y-auto p-6 ${show3DBackground ? "text-cyan-50" : ""}`}>
+                <div className="prose prose-sm max-w-none">
+                  <h3 className={`text-lg font-semibold mb-4 ${show3DBackground ? "text-cyan-100" : "text-gray-900"}`}>
+                    Extracted Content
+                  </h3>
+                  {extractedContent.split("\n\n").map((paragraph, index) => (
+                    <p key={index} className={`mb-4 leading-relaxed ${show3DBackground ? "text-cyan-50" : "text-gray-700"}`}>
+                      {paragraph}
+                    </p>
+                  ))}
                 </div>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="h-[500px] overflow-y-auto p-6">
-              <div className="prose prose-sm max-w-none">
-                <h3 className="text-lg font-semibold mb-4 text-gray-900">
-                  Extracted Content
-                </h3>
-                {extractedContent.split("\n\n").map((paragraph, index) => (
-                  <p key={index} className="mb-4 text-gray-700 leading-relaxed">
-                    {paragraph}
-                  </p>
-                ))}
-              </div>
-              
-              {/* Read Aloud Button */}
-              <div className="mt-6 pt-4 border-t">
-                <Button
-                  onClick={handleReadAloud}
-                  variant="outline"
-                  className="w-full gap-2"
-                  disabled={!!currentAudio}
-                >
-                  <Volume2 className="w-4 h-4" />
-                  {currentAudio ? 'Playing...' : 'Read Content Aloud (with Math)'}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Right side - AI Chat */}
-        <Card className="flex flex-col">
-          <CardHeader className="border-b">
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-purple-600" />
-              AI Assistant
-              {quizMode && (
-                <span className="text-sm font-normal text-purple-600">
-                  (Quiz Mode - Question {currentQuestionIndex + 1}/{currentQuizQuestions.length})
-                </span>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 flex flex-col p-0 min-h-[500px]">
-            {/* Chat messages - SIMPLE SCROLLING DIV */}
-            <div className="flex-1 overflow-y-auto p-4">
-              <div className="space-y-4">
-                {chatMessages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex ${
-                      message.role === "user" ? "justify-end" : "justify-start"
-                    }`}
+                
+                {/* Read Aloud Button */}
+                <div className="mt-6 pt-4 border-t">
+                  <Button
+                    onClick={handleReadAloud}
+                    variant="outline"
+                    className="w-full gap-2"
+                    disabled={!!currentAudio}
                   >
+                    <Volume2 className="w-4 h-4" />
+                    {currentAudio ? 'Playing...' : 'Read Content Aloud (with Math)'}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Right side - AI Chat */}
+          <Card className={`flex flex-col ${show3DBackground ? "bg-black/80 backdrop-blur-sm border-cyan-500/30" : ""}`}>
+            <CardHeader className="border-b">
+              <CardTitle className={`flex items-center gap-2 ${show3DBackground ? "text-cyan-100" : ""}`}>
+                <Sparkles className="w-5 h-5 text-purple-600" />
+                AI Assistant
+                {quizMode && (
+                  <span className="text-sm font-normal text-purple-600">
+                    (Quiz Mode - Question {currentQuestionIndex + 1}/{currentQuizQuestions.length})
+                  </span>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col p-0 min-h-[500px]">
+              {/* Chat messages */}
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="space-y-4">
+                  {chatMessages.map((message) => (
                     <div
-                      className={`max-w-[85%] rounded-lg p-3 ${
-                        message.role === "user"
-                          ? "bg-indigo-600 text-white"
-                          : "bg-gray-100 text-gray-900"
+                      key={message.id}
+                      className={`flex ${
+                        message.role === "user" ? "justify-end" : "justify-start"
                       }`}
                     >
-                      <p className="text-sm whitespace-pre-wrap">
-                        {message.content}
-                      </p>
-                      <div className="flex items-center justify-between mt-2">
-                        <p
-                          className={`text-xs ${
-                            message.role === "user"
-                              ? "text-indigo-200"
-                              : "text-gray-500"
-                          }`}
-                        >
-                          {new Date(message.timestamp).toLocaleTimeString()}
+                      <div
+                        className={`max-w-[85%] rounded-lg p-3 ${
+                          message.role === "user"
+                            ? show3DBackground 
+                              ? "bg-cyan-600/80 text-white backdrop-blur-sm" 
+                              : "bg-indigo-600 text-white"
+                            : show3DBackground
+                              ? "bg-gray-900/80 text-cyan-50 backdrop-blur-sm"
+                              : "bg-gray-100 text-gray-900"
+                        }`}
+                      >
+                        <p className="text-sm whitespace-pre-wrap">
+                          {message.content}
                         </p>
-                        {message.role === "assistant" && (
-                          <button
-                            onClick={() => speakText(message.content, false)}
-                            className="ml-2 text-xs flex items-center gap-1 hover:underline"
-                            disabled={!!currentAudio}
+                        <div className="flex items-center justify-between mt-2">
+                          <p
+                            className={`text-xs ${
+                              message.role === "user"
+                                ? show3DBackground ? "text-cyan-200" : "text-indigo-200"
+                                : show3DBackground ? "text-cyan-400" : "text-gray-500"
+                            }`}
                           >
-                            <Volume2 className="w-3 h-3" />
-                            Listen
-                          </button>
-                        )}
+                            {new Date(message.timestamp).toLocaleTimeString()}
+                          </p>
+                          {message.role === "assistant" && (
+                            <button
+                              onClick={() => speakText(message.content, false)}
+                              className="ml-2 text-xs flex items-center gap-1 hover:underline"
+                              disabled={!!currentAudio}
+                            >
+                              <Volume2 className="w-3 h-3" />
+                              Listen
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-                
-                {isLoading && (
-                  <div className="flex justify-start">
-                    <div className="bg-gray-100 text-gray-900 rounded-lg p-3">
-                      <p className="text-sm">AI is thinking...</p>
+                  ))}
+                  
+                  {isLoading && (
+                    <div className="flex justify-start">
+                      <div className={`rounded-lg p-3 ${show3DBackground ? "bg-gray-900/80 text-cyan-50 backdrop-blur-sm" : "bg-gray-100 text-gray-900"}`}>
+                        <p className="text-sm">AI is thinking...</p>
+                      </div>
                     </div>
-                  </div>
-                )}
-                
-                {/* Invisible div for auto-scroll target */}
-                <div ref={messagesEndRef} />
+                  )}
+                  
+                  {/* Invisible div for auto-scroll target */}
+                  <div ref={messagesEndRef} />
+                </div>
               </div>
-            </div>
 
-            {/* Quick prompts */}
-            <div className="px-4 py-3 border-t bg-gray-50">
-              <p className="text-xs text-gray-600 mb-2">Quick actions:</p>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSummary}
-                  disabled={isLoading || quizMode}
-                >
-                  📝 Summary
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleQuiz}
-                  disabled={isLoading || quizMode}
-                >
-                  ✍️ Quiz Me
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleExplain}
-                  disabled={isLoading || quizMode}
-                >
-                  💡 Explain
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleReadAloud}
-                  disabled={!!currentAudio}
-                >
-                  🔊 Read Aloud
-                </Button>
-              </div>
-            </div>
-
-            {/* Input area */}
-            <div className="p-4 border-t">
-              <div className="flex gap-2">
-                <Textarea
-                  ref={textareaRef}
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  placeholder={quizMode ? "Type or speak your answer..." : "Ask about this file..."}
-                  className="resize-none"
-                  rows={2}
-                  disabled={isLoading}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
-                />
-                <div className="flex flex-col gap-2">
+              {/* Quick prompts */}
+              <div className={`px-4 py-3 border-t ${show3DBackground ? "bg-gray-900/50 backdrop-blur-sm border-cyan-500/30" : "bg-gray-50"}`}>
+                <p className={`text-xs mb-2 ${show3DBackground ? "text-cyan-400" : "text-gray-600"}`}>Quick actions:</p>
+                <div className="flex flex-wrap gap-2">
                   <Button
-                    onClick={toggleVoiceInput}
-                    variant={isListening ? "destructive" : "outline"}
-                    className="self-end"
-                    title="Press Alt to speak"
-                    disabled={isLoading}
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSummary}
+                    disabled={isLoading || quizMode}
+                    className={show3DBackground ? "bg-gray-800/50 text-white border-cyan-500/50 hover:bg-gray-700/50 hover:text-cyan-100" : ""}
                   >
-                    {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                    📝 Summary
                   </Button>
                   <Button
-                    onClick={handleSendMessage}
-                    disabled={!inputMessage.trim() || isLoading}
-                    className="self-end"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleQuiz}
+                    disabled={isLoading || quizMode}
+                    className={show3DBackground ? "bg-gray-800/50 text-white border-cyan-500/50 hover:bg-gray-700/50 hover:text-cyan-100" : ""}
                   >
-                    <Send className="w-4 h-4" />
+                    ✍️ Quiz Me
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExplain}
+                    disabled={isLoading || quizMode}
+                    className={show3DBackground ? "bg-gray-800/50 text-white border-cyan-500/50 hover:bg-gray-700/50 hover:text-cyan-100" : ""}
+                  >
+                    💡 Explain
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleReadAloud}
+                    disabled={!!currentAudio}
+                    className={show3DBackground ? "bg-gray-800/50 text-white border-cyan-500/50 hover:bg-gray-700/50 hover:text-cyan-100" : ""}
+                  >
+                    🔊 Read Aloud
                   </Button>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+
+              {/* Input area */}
+              <div className={`p-4 border-t ${show3DBackground ? "border-cyan-500/30" : ""}`}>
+                <div className="flex gap-2">
+                  <Textarea
+                    ref={textareaRef}
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    placeholder={quizMode ? "Type or speak your answer..." : "Ask about this file..."}
+                    className="resize-none"
+                    rows={2}
+                    disabled={isLoading}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
+                  />
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      onClick={toggleVoiceInput}
+                      variant={isListening ? "destructive" : "outline"}
+                      className="self-end"
+                      title="Press Alt to speak"
+                      disabled={isLoading}
+                    >
+                      {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                    </Button>
+                    <Button
+                      onClick={handleSendMessage}
+                      disabled={!inputMessage.trim() || isLoading}
+                      className="self-end"
+                    >
+                      <Send className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

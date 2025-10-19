@@ -3,3 +3,99 @@
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/preflight.css" layer(base); /* This replaces @tailwind base */
 @import "tailwindcss/utilities.css" layer(utilities);
+
+/* Custom scrollbar styling for better look with 3D background */
+@layer components {
+  /* 3D Mode - Force all text to be visible */
+  .mode-3d {
+    color-scheme: dark;
+  }
+  
+  .mode-3d * {
+    color: white !important;
+  }
+  
+  .mode-3d input,
+  .mode-3d textarea,
+  .mode-3d select {
+    background-color: rgba(0, 0, 0, 0.8) !important;
+    color: white !important;
+    border-color: rgba(100, 200, 255, 0.5) !important;
+  }
+  
+  .mode-3d input::placeholder,
+  .mode-3d textarea::placeholder {
+    color: rgba(100, 200, 255, 0.7) !important;
+  }
+  
+  .mode-3d button {
+    color: white !important;
+    border-color: rgba(100, 200, 255, 0.5) !important;
+  }
+  
+  /* Webkit scrollbar (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(100, 200, 255, 0.5);
+    border-radius: 10px;
+    transition: background 0.3s;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 200, 255, 0.8);
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100, 200, 255, 0.5) rgba(0, 0, 0, 0.1);
+  }
+
+  /* Glassmorphism effect helper */
+  .glass-effect {
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(100, 200, 255, 0.2);
+  }
+
+  /* Holographic glow animation */
+  @keyframes hologram-glow {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(100, 200, 255, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px rgba(100, 200, 255, 0.6);
+    }
+  }
+
+  .hologram-glow {
+    animation: hologram-glow 3s ease-in-out infinite;
+  }
+
+  /* Smooth transitions for background toggle */
+  .transition-background {
+    transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
+  }
+}
+
+@layer utilities {
+  /* Text shadow for better readability on 3D background */
+  .text-glow {
+    text-shadow: 0 0 10px rgba(100, 200, 255, 0.8);
+  }
+
+  /* Canvas should be behind everything */
+  .z-background {
+    z-index: -1;
+  }
+}
