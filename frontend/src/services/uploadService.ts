@@ -35,11 +35,24 @@ export class UploadService {
   }
 
   static async getUploads(
-    userId: string = '123e4567-e89b-12d3-a456-426614174000',
+    userId: string,
     type?: string,
     page: number = 1,
     limit: number = 5
   ): Promise<UploadsResponse> {
+    if (!userId) {
+      console.warn('No userId provided to getUploads');
+      return {
+        uploads: [],
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalCount: 0,
+          hasNext: false,
+          hasPrevious: false,
+        }
+      };
+    }
     const params = new URLSearchParams({
       userId,
       page: page.toString(),

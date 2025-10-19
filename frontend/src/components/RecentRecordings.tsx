@@ -1,15 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { UploadService, type Upload } from "../services/uploadService";
 import { Pagination } from "./Pagination";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "./ui/alert";
+import { useAuth } from "../contexts/AuthContext";
 
 interface RecentRecordingsProps {
   onSelectRecording: (recording: Upload) => void;
   userId?: string;
 }
 
-export function RecentRecordings({ onSelectRecording, userId = '123e4567-e89b-12d3-a456-426614174000' }: RecentRecordingsProps) {
+export function RecentRecordings({ onSelectRecording, userId }: RecentRecordingsProps) {
+  const { user } = useAuth();
+  const actualUserId = userId || user?.id;
   const [recordings, setRecordings] = useState<Upload[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({
@@ -24,14 +27,20 @@ export function RecentRecordings({ onSelectRecording, userId = '123e4567-e89b-12
 
   const itemsPerPage = 5;
 
-  const fetchRecordings = async (page: number = 1) => {
+  const fetchRecordings = useCallback(async (page: number = 1) => {
     try {
-      console.log('🔄 Recent Recordings: Starting fetch for page', page, 'userId:', userId);
+      console.log('🔄 Recent Recordings: Starting fetch for page', page, 'userId:', actualUserId);
       setLoading(true);
       setError(null);
 
+      if (!actualUserId) {
+        console.warn('No user ID available, skipping fetch');
+        setLoading(false);
+        return;
+      }
+
       // Fetch all recordings (video and audio) in a single call
-      const data = await UploadService.getUploads(userId, undefined, page, itemsPerPage);
+      const data = await UploadService.getUploads(actualUserId, undefined, page, itemsPerPage);
       console.log('✅ Recent Recordings: Fetched data:', data);
 
       setRecordings(data.uploads);
@@ -52,12 +61,12 @@ export function RecentRecordings({ onSelectRecording, userId = '123e4567-e89b-12
       setLoading(false);
       console.log('🏁 Recent Recordings: Fetch completed, loading set to false');
     }
-  };
+  }, [actualUserId, itemsPerPage]);
 
   useEffect(() => {
-    console.log('🚀 Recent Recordings: useEffect triggered with currentPage:', currentPage, 'userId:', userId);
+    console.log('🚀 Recent Recordings: useEffect triggered with currentPage:', currentPage, 'userId:', actualUserId);
     fetchRecordings(currentPage);
-  }, [currentPage, userId]);
+  }, [currentPage, actualUserId, fetchRecordings]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
