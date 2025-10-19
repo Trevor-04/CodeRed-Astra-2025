@@ -33,14 +33,8 @@ export function RecentRecordings({ onSelectRecording, userId }: RecentRecordings
       setLoading(true);
       setError(null);
 
-      if (!actualUserId) {
-        console.warn('No user ID available, skipping fetch');
-        setLoading(false);
-        return;
-      }
-
-      // Fetch all recordings (video and audio) in a single call
-      const data = await UploadService.getUploads(actualUserId, undefined, page, itemsPerPage);
+      // Fetch recent recordings (video and audio only)
+      const data = await UploadService.getRecentRecordings(userId, page, itemsPerPage);
       console.log('✅ Recent Recordings: Fetched data:', data);
 
       setRecordings(data.uploads);

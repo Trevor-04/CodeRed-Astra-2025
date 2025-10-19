@@ -1,7 +1,7 @@
 import { publicAnonKey } from '../../utils/supabase/info';
 
 const API_BASE = 'https://bzrpuvripwivsiongdst.supabase.co/functions/v1/make-server-b67fdaad';
-const FALLBACK_API_BASE = 'http://localhost:3000/api'; // Node.js backend fallback
+const FALLBACK_API_BASE = 'http://localhost:5432/api'; // Node.js backend fallback
 
 export interface Upload {
   id: string;
@@ -31,6 +31,71 @@ export class UploadService {
     return {
       'Authorization': `Bearer ${publicAnonKey}`,
       'Content-Type': 'application/json',
+    };
+  }
+
+  static async getRecentRecordings(
+    userId: string = '123e4567-e89b-12d3-a456-426614174000',
+    page: number = 1,
+    limit: number = 5
+  ): Promise<UploadsResponse> {
+    const params = new URLSearchParams({
+      userId,
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+
+    // Try Supabase Edge Function first
+    try {
+      console.log('🔄 Trying Supabase Edge Function:', `${API_BASE}/recent-recordings?${params}`);
+      const response = await fetch(`${API_BASE}/recent-recordings?${params}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Supabase Edge Function success:', result);
+        return result;
+      }
+      
+      console.warn('❌ Supabase Edge Function failed:', response.status, response.statusText);
+    } catch (error) {
+      console.warn('❌ Supabase Edge Function error:', error);
+    }
+
+    // Try Node.js backend fallback
+    try {
+      console.log('🔄 Trying Node.js backend:', `${FALLBACK_API_BASE}/recent-recordings?${params}`);
+      const response = await fetch(`${FALLBACK_API_BASE}/recent-recordings?${params}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Node.js backend success:', result);
+        return result;
+      }
+      
+      console.warn('❌ Node.js backend failed:', response.status, response.statusText);
+      const errorText = await response.text();
+      console.error('❌ Node.js backend error details:', errorText);
+    } catch (error) {
+      console.warn('❌ Node.js backend error:', error);
+    }
+
+    // Return empty response if both APIs fail
+    console.warn('Both APIs unavailable, returning empty results');
+    return {
+      uploads: [],
+      pagination: {
+        currentPage: 1,
+        totalPages: 1,
+        totalCount: 0,
+        hasNext: false,
+        hasPrevious: false,
+      }
     };
   }
 

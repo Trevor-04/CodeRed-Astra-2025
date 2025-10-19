@@ -16,6 +16,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import { mockExtractedContent } from "./data/mockContent";
 import LoginPage from "./components/LoginPage";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { publicAnonKey } from "../utils/supabase/info";
 
 // Configure PDF.js worker with proper Vite handling
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -25,6 +26,14 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 
 // API base URL
 const API_BASE_URL = "http://localhost:3000/api";
+// Hardcoded user ID for development
+
+// Helper function to get authenticated headers for Supabase
+const getAuthHeaders = () => ({
+  'Authorization': `Bearer ${publicAnonKey}`,
+  'apikey': publicAnonKey,
+  'Content-Type': 'application/json'
+});
 
 interface Upload {
   id: string;
@@ -146,14 +155,16 @@ function AppContent() {
     });
   }, [mockUploads]);
 
-  const loadUploads = async (userId?: string) => {
-    if (!userId) return;
-    try {
-      const response = await fetch(`${API_BASE_URL}/uploads/${userId}`);
-      if (!response.ok) {
-        console.log("⚠️ Backend not available - using empty uploads list");
-        return;
-      }
+const loadUploads = async (userId?: string) => {
+  if (!userId) return;
+  try {
+    const response = await fetch(`${API_BASE_URL}/uploads/${userId}`, {
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) {
+      console.log("⚠️ Backend not available - using empty uploads list");
+      return;
+    }
       const data = await response.json();
       
       // Transform Supabase data to match our Upload interface
@@ -177,13 +188,24 @@ function AppContent() {
 
   const loadLessons = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/lessons`);
+      const response = await fetch(`${API_BASE_URL}/lessons`, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) {
         console.log("⚠️ Backend not available - using empty lessons list");
         return;
       }
       const data = await response.json();
       setLessons(data.lessons || []);
+      console.log("✅ Loaded lessons:", data.lessons?.length || 0);
+      // Debug: Log lesson audio URLs to check for demo audio
+      data.lessons?.forEach((lesson: any, index: number) => {
+        console.log(`Lesson ${index + 1}:`, {
+          title: lesson.title,
+          audioUrl: lesson.audioUrl?.substring(0, 50) + (lesson.audioUrl?.length > 50 ? '...' : ''),
+          isDataUrl: lesson.audioUrl?.startsWith('data:')
+        });
+      });
     } catch (error) {
       console.log("⚠️ Backend not available - using empty lessons list");
       // Don't log error details to avoid console spam during development
@@ -342,9 +364,7 @@ const parseFileContent = async (file: File, rawOnly: boolean = false): Promise<s
       // Send newUpload to backend API
       const response = await fetch(`${API_BASE_URL}/upload`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(newUpload)
       });
 
@@ -376,6 +396,7 @@ const parseFileContent = async (file: File, rawOnly: boolean = false): Promise<s
     try {
       const response = await fetch(`${API_BASE_URL}/lessons/${id}`, {
         method: "DELETE",
+        headers: getAuthHeaders()
       });
 
       if (!response.ok) {
@@ -434,10 +455,10 @@ const parseFileContent = async (file: File, rawOnly: boolean = false): Promise<s
                       }
                     );
                   }}
-                  onToggleContrastMode={() => setIsContrastMode(!isContrastMode)}
-                  onVoiceSpeedChange={setVoiceSpeed}
-                  onOpenSettings={() => navigate("/settings")}
-                />
+        onToggleContrastMode={() => setIsContrastMode(!isContrastMode)}
+        onVoiceSpeedChange={setVoiceSpeed}
+        onOpenSettings={() => navigate("/settings")}
+      />
                 <div id="main-content">
                   <Routes>
                     <Route
@@ -446,18 +467,17 @@ const parseFileContent = async (file: File, rawOnly: boolean = false): Promise<s
                     />
                     <Route
                       path="/upload"
-                      element={<UploadPage onBack={() => navigate("/")} onUpload={handleUpload} mockUploads={mockUploads} mockExtractedContent={mockExtractedContent} />}
+                      element={<UploadPage onBack={() => navigate("/")} onUpload={handleUpload} mockUploads={mockUploads} mockExtractedContent={mockExtractedContent} voiceSpeed={voiceSpeed} />}
                     />
-                    <Route path="/processing" element={<ProcessingScreen stage="uploading" />} />
                     <Route
                       path="/player"
                       element={
                         currentLesson ? (
                           <AudioPlayer
-                            audioUrl={currentLesson.audioUrl}
-                            extractedText={currentLesson.extractedText}
-                            mathContent={currentLesson.mathContent}
-                            lessonId={currentLesson.id}
+                            audioUrl={currentLesson!.audioUrl}
+                            extractedText={currentLesson!.extractedText}
+                            mathContent={currentLesson!.mathContent}
+                            lessonId={currentLesson!.id}
                             highlightAsSpoken={highlightAsSpoken}
                             onBack={() => navigate("/")}
                           />
